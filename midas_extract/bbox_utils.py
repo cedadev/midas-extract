@@ -105,5 +105,5 @@ if __name__ == "__main__":
     for lat in range(-90, 91, 45):
         for lon in lons:
             for bbox in bboxes:
-                print "Testing:", lat, lon, "in:", bbox, ":", isInBBox(
-                    lat, lon, bbox[0], bbox[1], bbox[2], bbox[3])
+                print(f"Testing: {lat}, {lon}, in: {bbox}, :")
+                print(isInBBox(lat, lon, bbox[0], bbox[1], bbox[2], bbox[3]))

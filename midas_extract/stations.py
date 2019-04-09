@@ -13,8 +13,8 @@ import sys
 import glob
 
 
-import bbox_utils
-import settings
+from midas_extract import bbox_utils
+from midas_extract import settings
 
 
 # Set up global variables
@@ -50,7 +50,7 @@ class StationIDGetter:
     Class to generate lists of station names from arguments.
     """
 
-    def __init__(self, counties, bbox, data_types, start_time, end_time, output_file=None, noprint=None):
+    def __init__(self, counties, bbox, data_types, start_time, end_time, output_file=None, quiet=None):
         """
         Sets up instance variables and calls relevant methods.
         """
@@ -79,23 +79,21 @@ class StationIDGetter:
             st_list = self._getByCounties(counties)
 
         # Now do extra filtering
-        self.st_list = self._filterBySourceCapability(st_list)
+        self.st_list = self._filter_by_src_caps(st_list)
 
         print("Number of stations found: {}\n".format(len(self.st_list)))
 
-        if noprint == None:
+        if not quiet:
             print("SRC IDs follow:\n==================")
-        if output_file == None:
-            if noprint == None:
+
+        if not output_file:
+            if not quiet:
                 for row in self.st_list:
                     print(row)
         else:
-            output = open(output_file, "w")
-
-            for row in self.st_list:
-                output.write(row + "\r\n")
-
-            output.close()
+            with open(output_file, "w") as output:
+                for row in self.st_list:
+                    output.write(row + "\r\n")
 
             print("Output written to '{}'".format(output_file))
 
@@ -111,8 +109,7 @@ class StationIDGetter:
         [N, W, S, E].
         """
         (n, w, s, e) = bbox
-        print "Searching within a box of (N - S) %s - %s and (W - E) %s - %s..." % (
-            n, s, w, e)
+        print(f"Searching within a box of (N - S) {n} - {s} and (W - E) {w} - {e}...")
         n = float(n)
         w = float(w)
         s = float(s)
@@ -132,19 +129,19 @@ class StationIDGetter:
 
         matchingStations = []
         for station in source["rows"]:
-            stationList = [item.strip() for item in station.split(",")]
+            station_list = [item.strip() for item in station.split(",")]
 
             try:
-                lat = float(stationList[latCol])
-                lon = float(stationList[lonCol])
+                lat = float(station_list[latCol])
+                lon = float(station_list[lonCol])
             except:
                 try:
-                    lat = float(stationList[latCol]+1)
-                    lon = float(stationList[lonCol]+1)
+                    lat = float(station_list[latCol] + 1)
+                    lon = float(station_list[lonCol] + 1)
                 except:
-                    print station
+                    print(station)
 
-            src_id = stationList[srcIDCol]
+            src_id = station_list[srcIDCol]
             if bbox_utils.isInBBox(lat, lon, n, w, s, e):
                 matchingStations.append(src_id)
 
@@ -166,7 +163,7 @@ class StationIDGetter:
         """
         Returns all stations within the borders of the counties listed.
         """
-        print "\nCOUNTIES to filter on:", counties
+        print("\nCOUNTIES to filter on: {}".format(counties))
 
         source = self.tables["SOURCE"]
         sourceCols = source["columns"]
@@ -194,8 +191,6 @@ class StationIDGetter:
             if areaType.upper() == "COUNTY" and areaName in counties:
 
                 countyCodes.append(areaID)
-#                countyMatches.append(re.compile(r"\s*([^,]+),\s*([^,]+,\s*){%s}(%s,)" % ((sourceAreaIDCol-1), areaID)))
-#                print r"([^,]+), ([^,]+, ){%s}(%s,)" % ((sourceAreaIDCol-1), areaID)
 
         matchingStations = []
 
@@ -205,16 +200,9 @@ class StationIDGetter:
             if items[sourceAreaIDCol] in countyCodes:
                 matchingStations.append(items[0])
 
-            # for cm in countyMatches:
-            #    match = cm.match(station)
-
-            #    if match:
-            #        src_id = match.group(1)
-            #        matchingStations.append(src_id)
-
         return matchingStations
 
-    def _filterBySourceCapability(self, st_list):
+    def _filter_by_src_caps(self, st_list):
         """
         Does data type and time range filtering if requested.
         """
@@ -222,11 +210,11 @@ class StationIDGetter:
             return st_list
 
         if self.data_types != []:
-            print "Filtering on data types: %s" % self.data_types
+            print("Filtering on data types: {}".format(self.data_types))
         if self.start_time:
-            print "From: %s" % self.start_time
+            print("From: {}".format(self.start_time))
         if self.end_time:
-            print "To: %s" % self.end_time
+            print("To: {}".format(self.end_time))
 
         new_list = []
 
@@ -289,8 +277,8 @@ class StationIDGetter:
         match = pattern.match(line)
 
         if match:
-            dateLong = long("".join(match.groups()[1:]))
-            return dateLong
+            date_long = long("".join(match.groups()[1:]))
+            return date_long
 
         return
 
