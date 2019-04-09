@@ -1,15 +1,5 @@
 # midas-extract
 
-
-[![Pypi][https://img.shields.io/pypi/v/midas_extract.svg]][https://pypi.python.org/pypi/midas_extract]
-
-[![Travis][https://img.shields.io/travis/cedadev/midas_extract.svg]][https://travis-ci.org/cedadev/midas_extract]
-
-[![Documentation][https://readthedocs.org/projects/midas-extract/badge/?version=latest]][https://midas-extract.readthedocs.io/en/latest/?badge=latest]
-
-
-
-
 A library for subsetting CSV files from the MIDAS DB
 
 
