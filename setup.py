@@ -5,11 +5,10 @@
 
 from setuptools import setup, find_packages
 
-__author__ = """Ag Stephens"""
+__author__ = "Ag Stephens"
 __contact__ = "ag.stephens@stfc.ac.uk"
 __copyright__ = "Copyright 2018 United Kingdom Research and Innovation"
 __license__ = "BSD - see LICENSE file in top-level package directory"
-__version__ = "0.1.0"
 
 
 from setuptools import setup, find_packages
@@ -35,8 +34,8 @@ test_requirements = ['pytest', ]
 
 
 setup(
-    author="Ag Stephens",
-    author_email='ag.stephens@stfc.ac.uk',
+    author=__author__,
+    author_email=__contact__,
 
     # See:
     # https://www.python.org/dev/peps/pep-0301/#distutils-trove-classification
@@ -88,6 +87,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/cedadev/midas_extract',
-    version='0.1.0',
+    version=_package_version,
     zip_safe=False,
 )
