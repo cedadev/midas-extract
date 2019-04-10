@@ -10,9 +10,11 @@ __license__ = "BSD - see LICENSE file in top-level package directory"
 
 import sys
 import click
+import tempfile
 
 from midas_extract.settings import START_DEFAULT, END_DEFAULT
 from midas_extract.stations import StationIDGetter
+from midas_extract.subsetter import MIDASSubsetter
 
 
 @click.group()
@@ -22,7 +24,7 @@ def main():
 
 @main.command()
 @click.option('--output-filepath', '-o', default=None, help='Output file path (optional)')
-@click.option('--tables', '-t', default=None, help='Comma-separated list of database tables')
+@click.option('--table', '-t', default=None, help='MIDAS Database table identifier')
 @click.option('--start', '-s', default=None, help='Start datetime as: YYYYMMDDhhmm')
 @click.option('--end', '-e', default=None, help='End datetime as: YYYYMMDDhhmm')
 @click.option('--columns', '-c', default='all', help='Columns to keep in the output')
@@ -31,34 +33,40 @@ def main():
 @click.option('--delimiter', '-d', default='default', help='Delimiter for output files')
 @click.option('--region', '-r', default=None, help='Region')
 @click.option('--src-id-file', '-f', default=None, help='File containing a list of SRC IDs')
-@click.option('--tempdir', '-p', default=None, help='Path to temporary directory')
-def subset(output_filepath=None, tables=None, start=None, end=None, columns='all',
+@click.option('--tmp-dir', '-p', default=None, help='Path to temporary directory')
+def filter(output_filepath=None, table=None, start=None, end=None, columns='all',
            conditions=None, src_ids=None, delimiter='default', region=None, src_id_file=None,
-           tempdir=None):
+           tmp_dir=None):
+    """
+    Filters records in a MIDAS data table (across multiple files).
+
+    Available filters:
+      - table
+      - datetime
+      - columns
+      - conditions
+      - station SRC IDs
+      - region 
+
+    The output can be modified by delimiter. 
+    """
+    return filter_records(**vars())
+
+
+def filter_records(output_filepath=None, table=None, start=None, end=None, columns='all',
+           conditions=None, src_ids=None, delimiter='default', region=None, src_id_file=None,
+           tmp_dir=None):
     """
     Subsets a MIDAS data table (across multiple files).
 
 
 Subsets data from the MIDAS flat files. Allows extraction by:
 
-- table
-- date range
-- column name
-- value conditions
-
 The MIDASSubsetter class needs to be able to see the file 'midas_structure.txt' which
 is essentially a description of the table contents in a text file. This is parsed each
 time this script is called.
 
 There is hard-coded limit of 100,000 lines that can currently be extracted.
-
-Usage:
-======
-
-    midas_extract subsetter -t <table> [-s <YYYYMMDDhhmm>] [-e <YYYYMMDDhhmm>]
-         [-c <column1>[,<column2>...]] [-n <conditions>] [-d <delimiter>]
-         [-i <src_id1>[,<src_id2>...]] [-g <groupfile>] [-r <region>] [-p <tempdir>] <outputFile>
-
 
 Where:
 ------
@@ -89,16 +97,9 @@ Examples:
     midas_extract subsetter -t RS -s 200401010000 -e 200401011000 -g testlist.txt outputfile.dat
     midas_extract subsetter -t RS -s 200401010000 -e 200401011000 -i 214,926 -d tab
 
-
-
     """
     if not output_filepath:
         output_filepath = 'display'
-
-    if start:
-        start = int(start)
-    if end:
-        end = int(end)
 
     if conditions:
         conditions = {}
@@ -111,17 +112,17 @@ Examples:
     if src_ids:
         src_ids = src_ids.strip('.')
 
-    if not temp_dir:
-        temp_dir = _get_temp_dir()
+    if not tmp_dir:
+        tmp_dir = tempfile.gettempdir()
 
     if src_id_file:
         src_ids = open(src_id_file).read().strip().split()
 
-    if not tables:
-        click.ClickException('Must provide table name(s) with "-t" argument.')
+    if not table:
+        raise click.ClickException('Must provide table ID with "-t" argument.')
 
-    return MIDASSubsetter(tables, output_filepath, start, end, columns, conditions,
-                          src_ids, region, delimiter, temp_dir=temp_dir)
+    return MIDASSubsetter(table, output_filepath, start, end, columns, conditions,
+                          src_ids, region, delimiter, tmp_dir=tmp_dir)
 
 
 

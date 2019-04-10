@@ -139,7 +139,7 @@ class StationIDGetter:
 
             src_id = station_list[srcIDCol]
 
-            if bbox_utils.isInBBox(lat, lon, n, w, s, e):
+            if bbox_utils.is_in_bbox(lat, lon, n, w, s, e):
                 matchingStations.append(src_id)
 
         return matchingStations

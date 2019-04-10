@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-def isInRange(i, start, end):
+def is_in_range(i, start, end):
     "Returns a boolean. True if i is inside (or equal to either) start -> end."
     if i >= start and i <= end:
         return True
@@ -26,7 +26,7 @@ def isInRange(i, start, end):
     return False
 
 
-def isInBBox(lat, lon, n, w, s, e):
+def is_in_bbox(lat, lon, n, w, s, e):
     """
     Returns a boolean. True if (lat, lon) point is in bounding box (n, w, s, e).
 
@@ -55,12 +55,12 @@ def isInBBox(lat, lon, n, w, s, e):
                       ("East", e, -360, 360)]
 
     for (name, v, start, end) in allowed_ranges:
-        if not isInRange(v, start, end):
+        if not is_in_range(v, start, end):
             raise ValueError(
                 "%s cannot be out of range %s - %s but is: %s" % (name, start, end, v))
 
     # Check lat is in south-north range
-    if not isInRange(lat, s, n):
+    if not is_in_range(lat, s, n):
         return False
 
     # Now check case (2)
@@ -68,14 +68,14 @@ def isInBBox(lat, lon, n, w, s, e):
         if lon > 0:
             lon -= 360
 
-        return isInRange(lon, w, e)
+        return is_in_range(lon, w, e)
 
     # Now check case (4)
     elif w >= 0 and e >= 0:
         if lon < 0:
             lon += 360
 
-        return isInRange(lon, w, e)
+        return is_in_range(lon, w, e)
 
     # Now check case (3): which we do by checking two ranges as follows:
     #   (w --> 0)   and   (0 --> e)
@@ -89,7 +89,7 @@ def isInBBox(lat, lon, n, w, s, e):
         if lon < 0:
             lon_check2 += 360
 
-        if isInRange(lon_check1, w, 0) or isInRange(lon_check2, 0, e):
+        if is_in_range(lon_check1, w, 0) or is_in_range(lon_check2, 0, e):
             return True
         else:
             return False
@@ -106,4 +106,4 @@ if __name__ == "__main__":
         for lon in lons:
             for bbox in bboxes:
                 print(f"Testing: {lat}, {lon}, in: {bbox}, :")
-                print(isInBBox(lat, lon, bbox[0], bbox[1], bbox[2], bbox[3]))
+                print(is_in_bbox(lat, lon, bbox[0], bbox[1], bbox[2], bbox[3]))

@@ -17,7 +17,9 @@ from click.testing import CliRunner
 
 from midas_extract import cli
 
-_GOOD_INPUTS = [
+
+_INPUTS = {
+'stations': (
 ['--county', 'cornwall,devon,wiltshire'],
 ['--bbox', '54,0,52,3'],
 ['--bbox', '54,0,52,3', '--quiet'],
@@ -27,7 +29,12 @@ _GOOD_INPUTS = [
 ['--county', 'DEVON', '--start', '199901010000', '--end', '200501010000', '--data-type', 'rain'],
 ['--county', 'DEVON', '--end', '200501010000', '--data-type', 'rain'],
 ['--county', 'DEVON', '--end', '200501010000', '--data-type', 'rain', '--output-filepath', '/tmp/stations.txt'],
-]
+),
+'filter': (
+['--table', 'TD', '--start', '', '--end', '2017091011000'],
+['--table', 'TD', '--start', '201709010000', '--end', '201802011000', '--output_filepath', '/tmp/outputfile.dat'],
+['--table', 'TD', '--start', '200401010000', '--end', '200401011000', '--src-ids', '214,926', '--delimiter', 'tab'],
+)}
 
 
 def _fix_key(key):
@@ -95,17 +102,49 @@ def test_cli_get_stations_successes():
     """Test multiple successful get_stations call via the CLI."""
     runner = CliRunner()
 
+    sub_cmd = 'stations' 
     # Test all successes
-    for inputs in _GOOD_INPUTS:
+    for inputs in _INPUTS[sub_cmd]:
 
-        result = runner.invoke(cli.main, ['stations'] + inputs)
+        result = runner.invoke(cli.main, [sub_cmd] + inputs)
         assert result.exit_code == 0
 
 
 def test_get_stations_successes():
     """Test multiple successful get_stations call in python."""
     # Test all successes
-    for inputs in _GOOD_INPUTS:
+    for inputs in _INPUTS['stations']:
+
+        kwargs = _map_inputs(inputs)
+        result = cli.get_stations(**kwargs)
+
+
+def test_cli_filter_records_fail():
+    """Test a failed filter call via the CLI."""
+    runner = CliRunner()
+
+    # Test a failure
+    result = runner.invoke(cli.main, 'filter')
+    assert result.exit_code == 1
+    assert 'Error: Must provide table ID with "-t" argument.' in result.output
+
+
+def test_cli_filter_records_successes():
+    """Test multiple successful get_stations call via the CLI."""
+    runner = CliRunner()
+
+    sub_cmd = 'stations'
+    # Test all successes
+    for inputs in _INPUTS[sub_cmd]:
+
+        result = runner.invoke(cli.main, [sub_cmd] + inputs)
+        assert result.exit_code == 0
+
+
+def test_filter_records_successes():
+    """Test multiple successful get_stations call in python."""
+    # Test all successes
+    for inputs in _INPUTS['stations']:
 
         kwargs = _map_inputs(inputs)
         result = cli.get_stations(**kwargs)

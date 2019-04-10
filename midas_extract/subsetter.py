@@ -62,28 +62,28 @@ midasSubsetter.py -t RS -s 200401010000 -e 200401011000 -i 214,926 -d tab
 
 # Import required modules
 import sys
-import commands
+import subprocess as sp
 import os
-import getopt
+import tempfile
 import re
 import glob
 import time
 
 
+from midas_extract import settings
+
+
+# Set up global variables
+metadata_dir = settings.METADATA_DIR
+data_dir = settings.DATA_DIR
+
 # Set up global variables
 base_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
-def expand(i): return os.path.join(base_dir, i)
-
-metadatadir = expand("metadata")
-datadir = expand("data")
-
-midasStructureTable = os.path.join(metadatadir, "allTablePartitionNames.txt")
-temp_dir = expand(".temporary")
-outputDir = temp_dir
+midasStructureTable = os.path.join(metadata_dir, "allTablePartitionNames.txt")
 
 # partition regex pattern
-_partitionPattern = re.compile(r"nonsense-data_[a-zA-Z\-]+_(\d{6})-(\d{6})\.txt")
+_partitionPattern = re.compile(r"\w+_[a-zA-Z\-]+_(\d{6})-(\d{6})\.txt")
 
 # Define nameDict globally
 nameDict = {'STXX': 'SOIL_TEMP_OB', 'SRCC': 'SRC_CAPABILITY', 'GLXX': 'GBL_WX_OB',
@@ -100,17 +100,19 @@ globalWXCodes = {"1": "glblwx-africa", "2": "glblwx-asia",
 
 def countLines(fname):
     "Returns a count of the lines in a files."
-    return commands.getoutput("wc -l %s" % fname).strip()
+    args = 'wc -l {}'.format(fname).split()
+    return int(sp.run(args, stdout=sp.PIPE, stderr=sp.PIPE).stdout.split()[0])
 
 
 def dateMatch(line, pattern):
     """
-    If line matches pattern then return the date as a long, else None.
+    If line matches pattern then return the date as an integer, else None.
     """
     match = pattern.match(line)
+
     if match:
-        dateLong = long("".join(match.groups()[1:]))
-        return dateLong
+        return int("".join(match.groups()[1:]))
+
     return
 
 
@@ -120,15 +122,19 @@ def tableMatch(tableName):
     """
     if len(tableName) < 5:
         shortnames = nameDict.keys()
+
         if tableName in shortnames:
             longname = nameDict[tableName]
         elif tableName + "XX" in shortnames:
             longname = nameDict[tableName + "XX"]
         else:
             raise Exception("Tablename not known: %s" % tableName)
+
         shortname = tableName[:2]
+
     else:
         longnames = nameDict.values()
+
         if tableName not in longnames:
             raise Exception("Tablename not known: %s" % tableName)
         else:
@@ -141,16 +147,7 @@ def tableMatch(tableName):
     return (shortname[:2], longname)
 
 
-def exitNicely(msg=""):
-    """
-    Takes an error message as the argument and prints help message.
-    """
-    print __doc__
-    print "ERROR:", msg
-    sys.exit()
-
-
-def padTime(timestring):
+def pad_time(timestring):
     """
     Returns a 12 digit string as time by padding any missing month, day, hour
     or minute values.
@@ -165,7 +162,7 @@ def getColumnIndex(tableID, colName):
     """
     Returns the index in a row of a given column name.
     """
-    inputFile = os.path.join(metadatadir, "table_structures/%sTB.txt" % tableID)
+    inputFile = os.path.join(metadata_dir, "table_structures/%sTB.txt" % tableID)
     colNames = [col.strip().lower() for col in open(inputFile).readlines()]
 
     if colName in colNames:
@@ -180,16 +177,27 @@ class MIDASSubsetter:
     Subsetting class to manage extractions from large text files holding MIDAS data.
     """
 
-    def __init__(self, tableNames, outputPath, startTime=None, endTime=None, columns="all", conditions=None,
-                 src_ids=None, region=None, delimiter="default", tempDir=temp_dir, verbose=1):
+    def __init__(self, table, outputPath, startTime=None, endTime=None, columns="all", conditions=None,
+                 src_ids=None, region=None, delimiter="default", tmp_dir=None, verbose=1):
         """
         Initialisation of instance sets up the rules and calls various methods.
         """
         self.region = region
         self.verbose = verbose
-        self.tempDir = tempDir
 
-        tableNames = [a.upper() for a in tableNames]
+        if not startTime:
+            startTime = settings.START_DEFAULT
+        
+        if not endTime:
+            endTime = settings.END_DEFAULT
+
+        if not tmp_dir: 
+            tmp_dir = tempfile.gettempdir()
+
+        self.tmp_dir = tmp_dir
+
+        table = table.upper()
+
         if type(columns) == type([]):
             # convert to list of ints if appropriate
             try:
@@ -200,38 +208,37 @@ class MIDASSubsetter:
         # Get full list of all tables and partitions
         tableDict = self._parseTableStructure()
 
-        (tableID, tableName) = tableMatch(tableNames[0])
-        if self.verbose:
-            print "NOTE: Multiple table search not yet implemented."
-        #print tableDict[tableName]
+        (tableID, tableName) = tableMatch(table)
 
         self.rowHeaders = self._getRowHeaders(tableID)
         if self.verbose:
-            print "Got row headers..."
+            print("Got row headers...")
         partitionFiles = tableDict[tableName]["partitionList"]
         if self.verbose:
-            print "Got partition files..."
+            print("Got partition files...")
 
         if self.verbose:
-            print "Getting file list..."
+            print("Getting file list...")
         fileList = self._getFileList(
             tableName, startTime, endTime, partitionFiles)
 
         if columns == "all" and conditions == None:
             if self.verbose:
-                print "\nExtracting all rows: %s\nFrom files: %s\nBetween: %s and %s\n" % (tableID, ("\t"+"\n\t".join(fileList)), startTime,
-                                                                                           endTime)
+                file_list_string = "\t"+"\n\t".join(fileList)
+                print(f'\nExtracting all rows: {tableID}\nFrom files: {file_list_string}\n' \
+                      f'Between: {startTime} and {endTime}\n')
+
             dataFile = self._getCompleteRows(
                 tableID, fileList, startTime, endTime, src_ids=src_ids)
         else:
             if self.verbose:
-                print "\nExtracting row subsets for: %s\nFrom files: %s\nBetween: %s and %s\n" % (tableID, fileList, startTime,
-                                                                                                  endTime)
+                print(f'\nExtracting row subsets for: {tableID}\nFrom files: {fileList}\n' \
+                      f'Between: {startTime} and {endTime}\n')
             dataFile = self._getRowSubsets(
                 tableID, fileList, startTime, endTime, columns, conditions)
 
         if self.verbose:
-            print "\nData extracted to temporary file(s)..."
+            print("\nData extracted to temporary file(s)...")
 
         self._writeOutputFile(dataFile, outputPath, delimiter)
 
@@ -242,27 +249,34 @@ class MIDASSubsetter:
         """
         tableDict = {}
 
-        fpatt = re.compile(r"nonsense-data_([a-zA-Z\-]+)_(\d{6})-(\d{6}).txt")
-
+        fpatt = re.compile(r"\w+_([a-zA-Z\-]+)_(\d{6})-(\d{6}).txt")
         tableList = nameDict.values()
 
         for tableName in tableList:  
 
             if tableName in ["SRC_CAPABILITY", "SOURCE", "TEMP_MIN_SOIL_OB", "MARINE_OB"]:
                 continue
+
             tableID = tableMatch(tableName)[0]
             tableDict[tableName] = {"partitionList": []}
 
-            partitionDir = datadir
+            partitionDir = os.path.join(data_dir, tableID, 'yearly_files')
+
+            if not os.path.isdir(partitionDir): continue
+
             os.chdir(partitionDir)
+
             partitionFiles = glob.glob("*.txt")
             partitionFiles.sort()
 
             for pfile in partitionFiles:
+
                 pmatch = fpatt.match(pfile)
+
                 if pmatch:
                     # Deal with non-matching regions if global used...
                     if self.region:
+
                         regionName = globalWXCodes[self.region]
                         if pmatch.groups()[0] != regionName:
                             continue
@@ -278,17 +292,20 @@ class MIDASSubsetter:
         """
         Returns a list of files required for reading based on the request.
         """
-        startYM = long(startTime[:6])
-        endYM = long(endTime[:6])
+        startYM = int(startTime[:6])
+        endYM = int(endTime[:6])
         filePathList = []
-        template = "nonsense-data_%s_%s-%s.txt"
 
-        for file in partitionFiles:
-            (nameStart, nameEnd) = pattern.search(file).groups()
-            if long(nameEnd) < long(startYM) or long(nameStart) > long(endYM):
+        for fname in partitionFiles:
+           
+            print(f'Working on input file: {fname}')
+            (nameStart, nameEnd) = pattern.search(fname).groups()
+
+            if int(nameEnd) < int(startYM) or int(nameStart) > int(endYM):
                 pass
             else:
-                filePathList.append(file)
+                filePathList.append(fname)
+
         return filePathList
 
     def _getCompleteRows(self, tableID, fileList, startTime, endTime, src_ids=None):
@@ -303,22 +320,20 @@ class MIDASSubsetter:
             except:
                 timeIndex = getColumnIndex(tableID, "ob_end_time")
 
-        _datePattern = re.compile(
-            r"([^,]+, ){%s}(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})" % timeIndex)
+        _datePattern = re.compile(r"([^,]+, ){%s}(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})" % timeIndex)
 
         now = time.strftime("%Y%m%d.%H%M%S", time.localtime(time.time()))
-        print self.tempDir
-        tempFilePath = os.path.join(self.tempDir, "temp_%s" % (now))
+        tempFilePath = os.path.join(self.tmp_dir, "temp_%s" % (now))
         tempFile = open(tempFilePath, "w")
 
-        startTimeLong = long(padTime(startTime))
-        endTimeLong = long(padTime(endTime))
+        startTimeLong = int(pad_time(startTime))
+        endTimeLong = int(pad_time(endTime))
 
         getAllSrcIds = False
         # Set up srcId pattern finders
         if src_ids:
             selectedRows = []
-            print "Now extracting station ids provided..."
+            print("Now extracting station ids provided...")
             srcidIndex = getColumnIndex(tableID, "src_id")
 
             # reg ex module has a limit of 9999 items that can be in a "|" separated match option
@@ -340,22 +355,23 @@ class MIDASSubsetter:
 
             lcount = 0
             if self.verbose:
-                print "\nFiltering file '%s' containing %s lines." % (
-                    filename, countLines(filename))
-            file = open(filename)
-            line = file.readline()
+                print(f'\nFiltering file "{filename}" containing {countLines(filename)} lines.')
+
+            f = open(filename)
+            line = f.readline()
 
             while line:
-                lcount = lcount+1
+ 
+                lcount = lcount + 1
                 if self.verbose and lcount % 100000 == 0:
-                    print "\tRead %s lines..." % lcount
+                    print(f'\tRead {lcount} lines...')
 
                 line = line.strip()
                 dmatch = dateMatch(line, _datePattern)
 
                 # Check if datetime has gone past the selected range
                 if dmatch and dmatch > endTimeLong:
-                    print "Breaking out of read loop because time past end time!"
+                    print("Breaking out of read loop because time past end time!")
                     break
 
                 # Now check if src ids need to match
@@ -368,26 +384,29 @@ class MIDASSubsetter:
                             break
 
                 if dmatch and (idmatch or getAllSrcIds):
+
                     if startTimeLong <= dmatch <= endTimeLong:
-                        tempFile.write(line.strip()+"\n")
+                        tempFile.write(line.strip() + "\n")
                         count += 1
 
-                line = file.readline()
+                line = f.readline()
 
-            file.close()
+            f.close()
+
         tempFile.close()
 
         if self.verbose:
-            print "Lines to filter = ", countLines(tempFilePath)
+            print(f'Lines to filter: {countLines(tempFilePath)}')
 
-        return tempFilePath  # rows
+        return tempFilePath 
 
     def _getRowHeaders(self, tableID, columns="all"):
         """
         Reads in the dictionary to get the headers for each column.
         """
         inputFile = os.path.join(
-            metadatadir, "table_structures/%sTB.txt" % tableID)
+            metadata_dir, "table_structures/%sTB.txt" % tableID)
+
         rowHeaders = [rh.strip().lower() for rh in open(inputFile).readlines()]
         return rowHeaders
 
@@ -395,43 +414,48 @@ class MIDASSubsetter:
         """
         Returns a list of rows after sub-setting according to columns and conditions.
         """
-        # rows=[]
         now = time.strftime("%Y%m%d.%H%M%S", time.localtime(time.time()))
-        tempFilePath = os.path.join(self.tempDir, "temp_%s" % (now))
+        tempFilePath = os.path.join(self.tmp_dir, "temp_%s" % (now))
         tempFile = open(tempFilePath, "w")
 
-        startTimeLong = long(padTime(startTime))
-        endTimeLong = long(padTime(endTime))
+        startTimeLong = int(pad_time(startTime))
+        endTimeLong = int(pad_time(endTime))
 
         count = 0
+
         for filename in fileList:
-            file = open(filename)
-            line = file.readline()
+
+            fout = open(filename)
+            line = fout.readline()
+
             while line:
                 line = line.strip()
                 match = dateMatch(line)
 
                 if match:
-                    dataTimeLong = long(match)
+                    dataTimeLong = int(match)
+
                     if startTimeLong < match < endTimeLong:
                         if type(columns) == type([]):
-                            newLine = None
+
+                            new_line = None
                             splitLine = re.split(",\s+", line)
 
                             for i in columns:
-                                i = i-1
-                                if newLine == None:
-                                    newLine = "%s, " % splitLine[i]
+                                i = i - 1
+
+                                if new_line == None:
+                                    new_line = "%s, " % splitLine[i]
                                 else:
-                                    newLine = "%s%s, " % (
-                                        newLine, splitLine[i])
-                            # rows.append(newLine)
-                            tempFile.write(newLine)
+                                    new_line = "%s%s, " % (
+                                        new_line, splitLine[i])
+
+                            tempFile.write(new_line)
 
                         count = count+1
-                line = file.readline()
+                line = fout.readline()
 
-            file.close()
+            fout.close()
             tempFile.close()
 
         return tempFilePath
@@ -443,19 +467,22 @@ class MIDASSubsetter:
         """
         headerLine = ", ".join(self.rowHeaders)+"\n"
 
-        print "Getting size of temporary output file."
+        print("Getting size of temporary output file.")
         size = os.path.getsize(tempDataFile)
-        if size > (200*10**6):
-            print "File is bigger than 200MB so I'm not going to try filtering it."
+
+        if size > (10**6)*200:
+            print("File is bigger than 200MB so I'm not going to try filtering it.")
 
             if outputPath == "display":
-                print "This file is too big to display so data has been saved to:"
+                print("This file is too big to display so data has been saved to:")
+
                 now = time.strftime(
                     "%Y%m%d.%H%M%S", time.localtime(time.time()))
-                outputPath = os.path.join(outputDir, "out_%s.txt" % now)
+                outputPath = os.path.join(tempfile.gettempdir(), "out_%s.txt" % now)
 
             outputFile = open(outputPath, "w")
             outputFile.write(headerLine)
+
             dataFile = open(tempDataFile)
             line = dataFile.readline()
 
@@ -466,11 +493,11 @@ class MIDASSubsetter:
             dataFile.close()
             outputFile.close()
 
-            print "\t", outputPath
+            print("\t{}".format(outputPath))
             os.unlink(tempDataFile)
             return
         else:
-            print "Can sort and filter since file is small."
+            print("Can sort and filter since file is small.")
 
         dataFile = open(tempDataFile)
         rows = dataFile.readlines()
@@ -482,19 +509,37 @@ class MIDASSubsetter:
 
         data = "".join(rows)
         if outputPath == "display":
-            print "Output data follows:\n"
-            print data+"\n"
+            print("Output data follows:\n")
+            print(data + "\n")
         else:
             if len(rows) == 1:
-                print "===\nNo data found.\n===\n"
-                data = "Your extraction request has run successfully, but no data have been found matching your request.\n\nPlease use the MIDAS station search pages on the CEDA website (http://archive.ceda.ac.uk/midas_stations/) to check your station reporting periods and message types to ensure that your selected stations report message types containing the data elements you require within your selected period.\n\nAdditional information about data outages/known issues/instrument failure can also be found on station records.\n\nIf you have completed these checks and believe the data should be available please contact the CEDA helpdesk for further assistance (support@ceda.ac.uk), providing full details of the extractions you are trying to submit."
+                print("===\nNo data found.\n===\n")
+
+                data = (
+"""Your extraction request has run successfully, but no 
+data have been found matching your request.
+
+Please use the MIDAS station search pages on the CEDA website 
+(http://archive.ceda.ac.uk/midas_stations/) to check your station 
+reporting periods and message types to ensure that your selected 
+stations report message types containing the data elements you 
+require within your selected period.
+
+Additional information about data outages/known issues/instrument 
+failure can also be found on station records.
+
+If you have completed these checks and believe the data should be 
+available please contact the CEDA helpdesk for further assistance 
+(support@ceda.ac.uk), providing full details of the extractions 
+you are trying to submit."""
+)
 
             output = open(outputPath, "w")
             output.write(data)
             output.close()
+
             if len(rows) > 1:
-                print "%s records written to: %s\n===\n" % (
-                    len(rows), outputPath)
+                print(f'{len(rows)} records written to: {outputPath}\n===\n')
 
         os.unlink(tempDataFile)
         return 1
