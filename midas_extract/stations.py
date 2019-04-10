@@ -32,7 +32,7 @@ _date_pattern = re.compile(r"(\d{4})-(\d{2})-(\d{2})\s*(\d{2})?:?(\d{2})?")
 
 def date_match(line, pattern):
     """
-    If line matches pattern then return the date as a long, else None.
+    If line matches pattern then return the date as an integer, else None.
     """
     match = pattern.match(line)
     if match:
@@ -40,7 +40,7 @@ def date_match(line, pattern):
         while len(d) < 12:
             d = d + "00"
 
-        dt = long(d)
+        dt = int(d)
         return dt
     return
 
@@ -56,7 +56,7 @@ class StationIDGetter:
         """
         self.data_types = [dtype.lower() for dtype in data_types]
 
-        # fix times to ensure correct formats (longs)
+        # fix times to ensure correct formats (integers)
         if type(start_time) == type("str"):
             start_time = start_time.replace("T", " ")
             start_time = date_match(start_time, _date_pattern)
@@ -69,14 +69,14 @@ class StationIDGetter:
         self.end_time = end_time
 
         # Read in tables
-        self._buildTables()
+        self.build_tables()
 
         # Do spatial search to get a load of SRC_IDs
         if counties == []:
-            st_list = self._getByBBox(bbox)
+            st_list = self._get_by_bbox(bbox)
         else:
             counties = [county.upper() for county in counties]
-            st_list = self._getByCounties(counties)
+            st_list = self._get_by_county(counties)
 
         # Now do extra filtering
         self.st_list = self._filter_by_src_caps(st_list)
@@ -97,23 +97,19 @@ class StationIDGetter:
 
             print("Output written to '{}'".format(output_file))
 
-    def getStationList(self):
+    def get_station_list(self):
         """
         Returns the list.
         """
         return self.st_list
 
-    def _getByBBox(self, bbox):
+    def _get_by_bbox(self, bbox):
         """
         Returns all stations within a bounding box described as
         [N, W, S, E].
         """
-        (n, w, s, e) = bbox
+        n, w, s, e = [float(_) for _ in bbox]
         print(f"Searching within a box of (N - S) {n} - {s} and (W - E) {w} - {e}...")
-        n = float(n)
-        w = float(w)
-        s = float(s)
-        e = float(e)
 
         # Reverse north and south if necessary
         if n < s:
@@ -123,9 +119,9 @@ class StationIDGetter:
 
         source = self.tables["SOURCE"]
         sourceCols = source["columns"]
-        latCol = self._getColumnIndex(sourceCols, "HIGH_PRCN_LAT")
-        lonCol = self._getColumnIndex(sourceCols, "HIGH_PRCN_LON")
-        srcIDCol = self._getColumnIndex(sourceCols, "SRC_ID")
+        latCol = self._get_column_index(sourceCols, "HIGH_PRCN_LAT")
+        lonCol = self._get_column_index(sourceCols, "HIGH_PRCN_LON")
+        srcIDCol = self._get_column_index(sourceCols, "SRC_ID")
 
         matchingStations = []
         for station in source["rows"]:
@@ -142,6 +138,7 @@ class StationIDGetter:
                     print(station)
 
             src_id = station_list[srcIDCol]
+
             if bbox_utils.isInBBox(lat, lon, n, w, s, e):
                 matchingStations.append(src_id)
 
@@ -151,15 +148,15 @@ class StationIDGetter:
         """
         Returns a reduced list of rows that match the term given.
         """
-        newRows = []
+        new_rows = []
 
         for row in rows:
             if row.find(term) > -1:
-                newRows.append(row)
+                new_rows.append(row)
 
-        return newRows
+        return new_rows
 
-    def _getByCounties(self, counties):
+    def _get_by_county(self, counties):
         """
         Returns all stations within the borders of the counties listed.
         """
@@ -170,25 +167,25 @@ class StationIDGetter:
         geog = self.tables["GEOG"]
         geogCols = geog["columns"]
 
-        areaTypeCol = self._getColumnIndex(geogCols, "GEOG_AREA_TYPE")
-        areaIDCol = self._getColumnIndex(geogCols, "WTHN_GEOG_AREA_ID")
-        areaNameCol = self._getColumnIndex(geogCols, "GEOG_AREA_NAME")
+        area_type_col = self._get_column_index(geogCols, "GEOG_AREA_TYPE")
+        areaIDCol = self._get_column_index(geogCols, "WTHN_GEOG_AREA_ID")
+        area_name_col = self._get_column_index(geogCols, "GEOG_AREA_NAME")
 
-        sourceAreaIDCol = self._getColumnIndex(sourceCols, "LOC_GEOG_AREA_ID")
-        srcIDCol = self._getColumnIndex(sourceCols, "SRC_ID")
+        sourceAreaIDCol = self._get_column_index(sourceCols, "LOC_GEOG_AREA_ID")
+        srcIDCol = self._get_column_index(sourceCols, "SRC_ID")
 
         countyCodes = []
         countyMatches = []
 
         for area in geog["rows"]:
 
-            areaList = [a.strip() for a in area.split(",")]
-            areaID = areaList[areaIDCol]
+            area_list = [a.strip() for a in area.split(",")]
+            areaID = area_list[areaIDCol]
 
-            areaType = areaList[areaTypeCol]
-            areaName = areaList[areaNameCol]
+            area_type = area_list[area_type_col]
+            area_name = area_list[area_name_col]
 
-            if areaType.upper() == "COUNTY" and areaName in counties:
+            if area_type.upper() == "COUNTY" and area_name in counties:
 
                 countyCodes.append(areaID)
 
@@ -222,11 +219,11 @@ class StationIDGetter:
         srccRows = srcc["rows"]
         srccCols = srcc["columns"]
 
-        idTypeCol = self._getColumnIndex(srccCols, "ID_TYPE")
-        srcIDCol = self._getColumnIndex(srccCols, "SRC_ID")
+        idTypeCol = self._get_column_index(srccCols, "ID_TYPE")
+        srcIDCol = self._get_column_index(srccCols, "SRC_ID")
 
-        startCol = self._getColumnIndex(srccCols, "SRC_CAP_BGN_DATE")
-        endCol = self._getColumnIndex(srccCols, "SRC_CAP_END_DATE")
+        startCol = self._get_column_index(srccCols, "SRC_CAP_BGN_DATE")
+        endCol = self._get_column_index(srccCols, "SRC_CAP_END_DATE")
 
         for row in srccRows:
 
@@ -270,25 +267,24 @@ class StationIDGetter:
         print("Selected after SRCC filtering: {}".format(len(new_list)))
         return new_list
 
-    def _lineMatch(self, line, pattern):
+    def _line_match(self, line, pattern):
         """
-        If line matches pattern then return the date as a long, else None.
+        If line matches pattern then return the date as an integer, else None.
         """
         match = pattern.match(line)
 
         if match:
-            date_long = long("".join(match.groups()[1:]))
-            return date_long
+            return int("".join(match.groups()[1:]))
 
         return
 
-    def _getColumnIndex(self, alist, item):
+    def _get_column_index(self, alist, item):
         """
         Returns the index of item in alist.
         """
         return alist.index(item)
 
-    def _buildTables(self):
+    def build_tables(self):
         """
         Builds some dictionaries to house the tables in the form:
         self.tables["SOURCE"] = {"columns"=["src_id", ...]
@@ -297,24 +293,24 @@ class StationIDGetter:
         self.tables = {}
 
         self.tables["SOURCE"] = {"columns": [i.strip() for i in open(source_cols_file).readlines()],
-                                 "rows": [i.strip() for i in self._cleanRows(open(source_file).readlines())]}
+                                 "rows": [i.strip() for i in self._clean_rows(open(source_file).readlines())]}
         self.tables["GEOG"] = {"columns": [i.strip() for i in open(geog_area_cols_file).readlines()],
-                               "rows": [i.strip() for i in self._cleanRows(open(geog_area_file).readlines())]}
+                               "rows": [i.strip() for i in self._clean_rows(open(geog_area_file).readlines())]}
         self.tables["SRCC"] = {"columns": [i.strip() for i in open(source_caps_cols_file).readlines()],
-                               "rows": [i.strip() for i in self._cleanRows(open(source_capabilities_file).readlines())]}
+                               "rows": [i.strip() for i in self._clean_rows(open(source_capabilities_file).readlines())]}
 
-    def _cleanRows(self, rows):
+    def _clean_rows(self, rows):
         """
         Returns rows that should have removed any odd SQL headers or footers.
         """
-        newRows = []
+        new_rows = []
 
         for row in rows:
             if row.find("[") > -1 or row.find("SQL") > -1 or row.find("Oracle") > -1:
                 continue
 
             if row.find(",") > -1:
-                newRows.append(row)
+                new_rows.append(row)
 
-        return newRows
+        return new_rows
 

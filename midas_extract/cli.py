@@ -35,42 +35,9 @@ def main():
 def subset(output_filepath=None, tables=None, start=None, end=None, columns='all',
            conditions=None, src_ids=None, delimiter='default', region=None, src_id_file=None,
            tempdir=None):
+    """
+    Subsets a MIDAS data table (across multiple files).
 
-    if not output_filepath:
-        output_filepath = 'display'
-
-    if start:
-        start = long(start)
-    if end:
-        end = long(end)
-
-    if conditions:
-        conditions = {}
-        condition_list = value.split(',')
-
-        for cond in condition_list:
-            a, b = cond.split('=')
-            conditions[a] = b 
-
-    if src_ids:
-        src_ids = src_ids.strip('.')
-
-    if not temp_dir:
-        temp_dir = _get_temp_dir()
-
-    if src_id_file:
-        src_ids = open(src_id_file).read().strip().split()
-
-    if not tables:
-        click.ClickException('Must provide table name(s) with "-t" argument.')
-
-    return MIDASSubsetter(tables, output_filepath, start, end, columns, conditions,
-                          src_ids, region, delimiter, temp_dir=temp_dir)
-
-
-"""
-midasSubsetter.py
-=================
 
 Subsets data from the MIDAS flat files. Allows extraction by:
 
@@ -121,7 +88,42 @@ Examples:
     midas_extract subsetter -t RS -s 200401010000 -e 200401011000 outputfile.dat
     midas_extract subsetter -t RS -s 200401010000 -e 200401011000 -g testlist.txt outputfile.dat
     midas_extract subsetter -t RS -s 200401010000 -e 200401011000 -i 214,926 -d tab
-"""
+
+
+
+    """
+    if not output_filepath:
+        output_filepath = 'display'
+
+    if start:
+        start = int(start)
+    if end:
+        end = int(end)
+
+    if conditions:
+        conditions = {}
+        condition_list = value.split(',')
+
+        for cond in condition_list:
+            a, b = cond.split('=')
+            conditions[a] = b 
+
+    if src_ids:
+        src_ids = src_ids.strip('.')
+
+    if not temp_dir:
+        temp_dir = _get_temp_dir()
+
+    if src_id_file:
+        src_ids = open(src_id_file).read().strip().split()
+
+    if not tables:
+        click.ClickException('Must provide table name(s) with "-t" argument.')
+
+    return MIDASSubsetter(tables, output_filepath, start, end, columns, conditions,
+                          src_ids, region, delimiter, temp_dir=temp_dir)
+
+
 
 
 @main.command()
@@ -133,20 +135,18 @@ Examples:
 @click.option('--start', '-s', default=None, help='Start datetime as: YYYYMMDDhhmm')
 @click.option('--end', '-e', default=None, help='End datetime as: YYYYMMDDhhmm') 
 @click.option('--data-type', '-d', default=None, help='List of data types')
+def stations(output_filepath=None, county=None, bbox=None, quiet=False, counties_file=None,
+                 start=None, end=None, data_type=None):
+    """
+    Returns a list of stations SRC IDs based on inputs.
+    """
+    return get_stations(**vars())
+
+
 def get_stations(output_filepath=None, county=None, bbox=None, quiet=False, counties_file=None,
                  start=None, end=None, data_type=None):
     """
-    Takes a county or list of counties and returns a list of station IDs (src_id).
-
-    midas_extract get_stations  -c cornwall,devon,wiltshire
-    midas_extract get_stations  -b 52,54,0,3
-    midas_extract get_stations  -b 52,54,0,3 -n
-    midas_extract get_stations  -b 52,52.2,0.2,0.4 -s 200301010000
-    midas_extract get_stations  -b 52,52.2,0.2,0.4 -s 200301010000 -d rain
-    midas_extract get_stations  -b 52,52.2,0.2,0.4 -s 199901010000 -e 200501010000 -d rain
-    midas_extract get_stations  -c DEVON -s 199901010000 -e 200501010000 -d rain
-    midas_extract get_stations  -c DEVON  -e 200501010000 -d rain
-
+    Returns a list of stations SRC IDs based on inputs.
     """
     if not county:
         county = []
@@ -161,9 +161,9 @@ def get_stations(output_filepath=None, county=None, bbox=None, quiet=False, coun
             county = reader.read().strip().split()
 
     if start:
-        start = long(start)
+        start = int(start)
     if end:
-        end = long(end)
+        end = int(end)
 
     if not data_type:
         data_type = []

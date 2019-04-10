@@ -11,12 +11,48 @@ __version__ = "0.1.0"
 
 
 import pytest
+from queue import deque
 
 from click.testing import CliRunner
 
-from midas_extract import midas_extract
 from midas_extract import cli
 
+_GOOD_INPUTS = [
+['--county', 'cornwall,devon,wiltshire'],
+['--bbox', '54,0,52,3'],
+['--bbox', '54,0,52,3', '--quiet'],
+['--bbox', '52,0.2,51,0.4', '--start', '200301010000'],
+['--bbox', '52,0.2,51,0.4', '--start', '200301010000', '--data-type', 'rain'],
+['--county', 'cornwall', '--start', '199901010000', '--end', '200501010000', '--data-type', 'rain'],
+['--county', 'DEVON', '--start', '199901010000', '--end', '200501010000', '--data-type', 'rain'],
+['--county', 'DEVON', '--end', '200501010000', '--data-type', 'rain'],
+['--county', 'DEVON', '--end', '200501010000', '--data-type', 'rain', '--output-filepath', '/tmp/stations.txt'],
+]
+
+
+def _fix_key(key):
+    return key.lstrip('-').replace('-', '_') 
+
+
+def _map_inputs(inputs_list):
+    """Maps a list of inputs to a dictionary of kwargs."""
+    inputs = {}
+    d = deque(inputs_list)
+
+    while d:
+  
+        key = d.popleft()
+        key = _fix_key(key)
+
+        if (d and d[0].startswith('--')) or not d:
+            value = True
+        else:
+            value = d.popleft()
+
+        inputs[key] = value
+
+    return inputs
+         
 
 @pytest.fixture
 def response():
@@ -34,12 +70,43 @@ def test_content(response):
     # assert 'GitHub' in BeautifulSoup(response.content).title.string
 
 
-def test_command_line_interface():
+def test_cli_help():
     """Test the CLI."""
     runner = CliRunner()
     result = runner.invoke(cli.main)
     assert result.exit_code == 0
-    assert 'midas_extract.cli.main' in result.output
+    assert 'Returns a list of stations SRC IDs based on inputs.' in result.output
     help_result = runner.invoke(cli.main, ['--help'])
     assert help_result.exit_code == 0
     assert '--help  Show this message and exit.' in help_result.output
+
+
+def test_cli_get_stations_fail():
+    """Test a failed get_stations call via the CLI."""
+    runner = CliRunner()
+
+    # Test a failure
+    result = runner.invoke(cli.main, 'stations')
+    assert result.exit_code == 1
+    assert 'Error: You must provide a miminum of either a list of counties or bbox coordinates.' in result.output
+
+
+def test_cli_get_stations_successes():
+    """Test multiple successful get_stations call via the CLI."""
+    runner = CliRunner()
+
+    # Test all successes
+    for inputs in _GOOD_INPUTS:
+
+        result = runner.invoke(cli.main, ['stations'] + inputs)
+        assert result.exit_code == 0
+
+
+def test_get_stations_successes():
+    """Test multiple successful get_stations call in python."""
+    # Test all successes
+    for inputs in _GOOD_INPUTS:
+
+        kwargs = _map_inputs(inputs)
+        result = cli.get_stations(**kwargs)
+
