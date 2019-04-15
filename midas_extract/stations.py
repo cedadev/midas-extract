@@ -19,13 +19,13 @@ from midas_extract import settings
 
 # Set up global variables
 metadata_dir = settings.METADATA_DIR
-source_file = os.path.join(metadata_dir, "SRCE.DATA.COMMAS_REMOVED")
-source_cols_file = os.path.join(metadata_dir, "SOURCE.txt")
-source_capabilities_file = os.path.join(metadata_dir, "SRCC.DATA")
+source_file = os.path.join(metadata_dir, "SRCE", "SRCE.DATA.COMMAS_REMOVED")
+source_cols_file = os.path.join(metadata_dir, "table_structures", "SRTB.txt")
+source_capabilities_file = os.path.join(metadata_dir, "SRCC", "SRCC.DATA")
 source_caps_cols_file = os.path.join(metadata_dir, "table_structures", "SCTB.txt")
 
-geog_area_file = os.path.join(metadata_dir, "GEAR.DATA")
-geog_area_cols_file = os.path.join(metadata_dir, "GEOGRAPHIC_AREA.txt")
+geog_area_file = os.path.join(metadata_dir, "GEAR", "GEAR.DATA")
+geog_area_cols_file = os.path.join(metadata_dir, "table_structures", "GEOGRAPHIC_AREA.txt")
 
 _date_pattern = re.compile(r"(\d{4})-(\d{2})-(\d{2})\s*(\d{2})?:?(\d{2})?")
 
