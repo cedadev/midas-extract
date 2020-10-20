@@ -12,7 +12,7 @@ To install midas-extract, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install midas_extract
+    $ pip install midas-extract
 
 This is the preferred method to install midas-extract, as it will always install the most recent stable release.
 
@@ -32,13 +32,13 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/cedadev/midas_extract
+    $ git clone git://github.com/cedadev/midas-extract
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl  -OL https://github.com/cedadev/midas_extract/tarball/master
+    $ curl  -OL https://github.com/cedadev/midas-extract/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -47,5 +47,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/cedadev/midas_extract
-.. _tarball: https://github.com/cedadev/midas_extract/tarball/master
+.. _Github repo: https://github.com/cedadev/midas-extract
+.. _tarball: https://github.com/cedadev/midas-extract/tarball/master

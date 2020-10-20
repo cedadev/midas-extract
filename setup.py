@@ -80,13 +80,13 @@ setup(
     long_description_content_type='text/markdown',
 
     include_package_data=True,
-    keywords='midas_extract',
-    name='midas_extract',
+    keywords='midas, extract',
+    name='midas-extract',
     packages=find_packages(include=['midas_extract']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/cedadev/midas_extract',
+    url='https://github.com/cedadev/midas-extract',
     version=_package_version,
     zip_safe=False,
 )

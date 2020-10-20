@@ -18,13 +18,13 @@ Before using the code you will need to:
 Install from PyPI:
 
 ```
-pip install midas_extract
+pip install midas-extract
 ```
 
 Or from GitHub:
 
 ```
-pip install git+https://github.com/cedadev/midas_extract
+pip install git+https://github.com/cedadev/midas-extract
 ``` 
 
 ### If not on JASMIN: set your local data/metadata directories
