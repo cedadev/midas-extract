@@ -439,7 +439,7 @@ class MIDASSubsetter:
                         if type(columns) == type([]):
 
                             new_line = None
-                            splitLine = re.split(",\s+", line)
+                            splitLine = re.split(r",\s+", line)
 
                             for i in columns:
                                 i = i - 1
