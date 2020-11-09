@@ -50,11 +50,15 @@ class StationIDGetter:
     Class to generate lists of station names from arguments.
     """
 
-    def __init__(self, counties, bbox, data_types, start_time, end_time, output_file=None, quiet=None):
+    def __init__(self, counties, bbox, start_time, end_time, data_types=None, 
+                 output_file=None, quiet=None):
         """
         Sets up instance variables and calls relevant methods.
         """
-        self.data_types = [dtype.lower() for dtype in data_types]
+        if not data_types:
+            self.data_types = []
+        else: 
+            self.data_types = [dtype.lower() for dtype in data_types]
 
         # fix times to ensure correct formats (integers)
         if type(start_time) == type("str"):

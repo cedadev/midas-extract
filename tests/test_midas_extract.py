@@ -19,22 +19,23 @@ from midas_extract import cli
 
 
 _INPUTS = {
-'stations': (
-['--county', 'cornwall,devon,wiltshire'],
-['--bbox', '54,0,52,3'],
-['--bbox', '54,0,52,3', '--quiet'],
-['--bbox', '52,0.2,51,0.4', '--start', '200301010000'],
-['--bbox', '52,0.2,51,0.4', '--start', '200301010000', '--data-type', 'rain'],
-['--county', 'cornwall', '--start', '199901010000', '--end', '200501010000', '--data-type', 'rain'],
-['--county', 'DEVON', '--start', '199901010000', '--end', '200501010000', '--data-type', 'rain'],
-['--county', 'DEVON', '--end', '200501010000', '--data-type', 'rain'],
-['--county', 'DEVON', '--end', '200501010000', '--data-type', 'rain', '--output-filepath', '/tmp/stations.txt'],
-),
-'filter': (
-['--table', 'TD', '--start', '', '--end', '2017091011000'],
-['--table', 'TD', '--start', '201709010000', '--end', '201802011000', '--output_filepath', '/tmp/outputfile.dat'],
-['--table', 'TD', '--start', '200401010000', '--end', '200401011000', '--src-ids', '214,926', '--delimiter', 'tab'],
-)}
+    'stations': (
+        ['--county', 'cornwall,devon,wiltshire'],
+        ['--bbox', '54,0,52,3'],
+        ['--bbox', '54,0,52,3', '--quiet'],
+        ['--bbox', '52,0.2,51,0.4', '--start', '200301010000'],
+        ['--bbox', '52,0.2,51,0.4', '--start', '200301010000', '--data-type', 'rain'],
+        ['--county', 'cornwall', '--start', '199901010000', '--end', '200501010000', '--data-type', 'rain'],
+        ['--county', 'DEVON', '--start', '199901010000', '--end', '200501010000', '--data-type', 'rain'],
+        ['--county', 'DEVON', '--end', '200501010000', '--data-type', 'rain'],
+        ['--county', 'DEVON', '--end', '200501010000', '--data-type', 'rain', '--output-filepath', '/tmp/stations.txt'],
+    ),
+    'filter': (
+        ['--table', 'TD', '--start', '', '--end', '2017091011000'],
+        ['--table', 'TD', '--start', '201709010000', '--end', '201802011000', '--output_filepath', '/tmp/outputfile.dat'],
+        ['--table', 'TD', '--start', '200401010000', '--end', '200401011000', '--src-ids', '214,926', '--delimiter', 'tab'],
+    )
+}
 
 
 def _fix_key(key):
@@ -69,6 +70,7 @@ def response():
     """
     # import requests
     # return requests.get('https://github.com/audreyr/cookiecutter-pypackage')
+    pass
 
 
 def test_content(response):

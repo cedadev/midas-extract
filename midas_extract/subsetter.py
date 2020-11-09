@@ -2,8 +2,8 @@
 
 """
 
-midasSubsetter.py
-=================
+subsetter.py
+============
 
 Subsets data from the MIDAS flat files. Allows extraction by:
 
@@ -21,7 +21,7 @@ There is hard-coded limit of 100,000 lines that can currently be extracted.
 Usage:
 ======
 
-    midasSubsetter.py -t <table> [-s <YYYYMMDDhhmm>] [-e <YYYYMMDDhhmm>]
+    cli.py filter -t <table> [-s <YYYYMMDDhhmm>] [-e <YYYYMMDDhhmm>]
          [-c <column1>[,<column2>...]] [-n <conditions>] [-d <delimiter>]
          [-i <src_id1>[,<src_id2>...]] [-g <groupfile>] [-r <region>] [-p <tempdir>] <outputFile>
 
@@ -50,13 +50,13 @@ Where:
 Examples:
 =========
 
-midasSubsetter.py -t RS -s 200401010000 -e 200401011000
+cli.py filter -t RS -s 200401010000 -e 200401011000
 
-midasSubsetter.py -t RS -s 200401010000 -e 200401011000 outputfile.dat
+cli.py filter -t RS -s 200401010000 -e 200401011000 outputfile.dat
 
-midasSubsetter.py -t RS -s 200401010000 -e 200401011000 -g testlist.txt outputfile.dat
+cli.py filter -t RS -s 200401010000 -e 200401011000 -g testlist.txt outputfile.dat
 
-midasSubsetter.py -t RS -s 200401010000 -e 200401011000 -i 214,926 -d tab
+cli.py filter -t RS -s 200401010000 -e 200401011000 -i 214,926 -d tab
 
 """
 
@@ -178,7 +178,7 @@ class MIDASSubsetter:
     """
 
     def __init__(self, table, outputPath, startTime=None, endTime=None, columns="all", conditions=None,
-                 src_ids=None, region=None, delimiter="default", tmp_dir=None, verbose=1):
+                 src_ids=None, region=None, delimiter="default", tmp_dir=None, verbose=True):
         """
         Initialisation of instance sets up the rules and calls various methods.
         """
@@ -213,12 +213,15 @@ class MIDASSubsetter:
         self.rowHeaders = self._getRowHeaders(tableID)
         if self.verbose:
             print("Got row headers...")
+
         partitionFiles = tableDict[tableName]["partitionList"]
+
         if self.verbose:
             print("Got partition files...")
 
         if self.verbose:
             print("Getting file list...")
+
         fileList = self._getFileList(
             tableName, startTime, endTime, partitionFiles)
 
@@ -230,6 +233,7 @@ class MIDASSubsetter:
 
             dataFile = self._getCompleteRows(
                 tableID, fileList, startTime, endTime, src_ids=src_ids)
+
         else:
             if self.verbose:
                 print(f'\nExtracting row subsets for: {tableID}\nFrom files: {fileList}\n' \
@@ -308,9 +312,9 @@ class MIDASSubsetter:
 
         return filePathList
 
-    def _getCompleteRows(self, tableID, fileList, startTime, endTime, src_ids=None):
+    def _get_date_regex(self, tableID):
         """
-        Returns a list of complete rows from the database.
+        Returns the required Date regex pattern based on the table ID. 
         """
         try:
             timeIndex = getColumnIndex(tableID, "ob_time")
@@ -320,7 +324,14 @@ class MIDASSubsetter:
             except:
                 timeIndex = getColumnIndex(tableID, "ob_end_time")
 
-        _datePattern = re.compile(r"([^,]+, ){%s}(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})" % timeIndex)
+        date_pattern = re.compile(r"([^,]+, ){%s}(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})" % timeIndex)
+        return date_pattern
+
+    def _getCompleteRows(self, tableID, fileList, startTime, endTime, src_ids=None):
+        """
+        Returns a list of complete rows from the database.
+        """
+        _datePattern = self._get_date_regex(tableID)
 
         now = time.strftime("%Y%m%d.%H%M%S", time.localtime(time.time()))
         tempFilePath = os.path.join(self.tmp_dir, "temp_%s" % (now))
@@ -414,6 +425,8 @@ class MIDASSubsetter:
         """
         Returns a list of rows after sub-setting according to columns and conditions.
         """
+        _datePattern = self._get_date_regex(tableID)
+
         now = time.strftime("%Y%m%d.%H%M%S", time.localtime(time.time()))
         tempFilePath = os.path.join(self.tmp_dir, "temp_%s" % (now))
         tempFile = open(tempFilePath, "w")
@@ -430,7 +443,7 @@ class MIDASSubsetter:
 
             while line:
                 line = line.strip()
-                match = dateMatch(line)
+                match = dateMatch(line, _datePattern)
 
                 if match:
                     dataTimeLong = int(match)
@@ -499,18 +512,20 @@ class MIDASSubsetter:
         else:
             print("Can sort and filter since file is small.")
 
-        dataFile = open(tempDataFile)
-        rows = dataFile.readlines()
-        dataFile.close()
+        with open(tempDataFile) as dataFile:
+            rows = dataFile.readlines()
+
         rows.insert(0, headerLine)
 
         if delimiter != "default":
             rows = self._reFormatDelimiters(rows, delimiter)
 
         data = "".join(rows)
+        
         if outputPath == "display":
             print("Output data follows:\n")
             print(data + "\n")
+
         else:
             if len(rows) == 1:
                 print("===\nNo data found.\n===\n")
