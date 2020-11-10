@@ -109,7 +109,7 @@ Examples:
             conditions[a] = b 
 
     if src_ids:
-        src_ids = src_ids.strip('.')
+        src_ids = src_ids.split(',')
 
     if not tmp_dir:
         tmp_dir = tempfile.gettempdir()
