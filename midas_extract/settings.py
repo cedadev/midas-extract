@@ -22,10 +22,10 @@ if not os.path.isdir(METADATA_DIR):
     raise Exception('Metadata directory does not exist: {}'.format(METADATA_DIR))
 
 
-
 def _now():
     return datetime.datetime.now().strftime('%Y%m%d%H%M')
 
 START_DEFAULT = '185901010000'
 END_DEFAULT = _now()
+
 

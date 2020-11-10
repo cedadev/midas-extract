@@ -22,25 +22,25 @@ def main():
    pass
 
 
-@main.command()
+@main.command('extract')
 @click.option('--output-filepath', '-o', default=None, help='Output file path (optional)')
 @click.option('--table', '-t', default=None, help='MIDAS Database table identifier')
 @click.option('--start', '-s', default=None, help='Start datetime as: YYYYMMDDhhmm')
 @click.option('--end', '-e', default=None, help='End datetime as: YYYYMMDDhhmm')
 @click.option('--columns', '-c', default='all', help='Columns to keep in the output')
-@click.option('--conditions', '-n', default=None, help='Conditions with which to filter data')
+@click.option('--conditions', '-n', default=None, help='Conditions with which to extract data')
 @click.option('--src-ids', '-i', default=None, help='Comma-separated list of station SRC IDs')
 @click.option('--delimiter', '-d', default='default', help='Delimiter for output files')
 @click.option('--region', '-r', default=None, help='Region')
 @click.option('--src-id-file', '-f', default=None, help='File containing a list of SRC IDs')
 @click.option('--tmp-dir', '-p', default=None, help='Path to temporary directory')
-def filter(output_filepath=None, table=None, start=None, end=None, columns='all',
+def extract(output_filepath=None, table=None, start=None, end=None, columns='all',
            conditions=None, src_ids=None, delimiter='default', region=None, src_id_file=None,
            tmp_dir=None):
     """
     Filters records in a MIDAS data table (across multiple files).
 
-    Available filters:
+    Available extracts:
       - table
       - datetime
       - columns
@@ -49,24 +49,23 @@ def filter(output_filepath=None, table=None, start=None, end=None, columns='all'
       - region 
 
     The output can be modified by delimiter. 
+
+    Subsets a MIDAS data table (across multiple files).
     """
-    return filter_records(**vars())
+    return extract_records(**vars())
 
 
-def filter_records(output_filepath=None, table=None, start=None, end=None, columns='all',
+def extract_records(output_filepath=None, table=None, start=None, end=None, columns='all',
            conditions=None, src_ids=None, delimiter='default', region=None, src_id_file=None,
            tmp_dir=None):
-    """
-    Subsets a MIDAS data table (across multiple files).
+    """ 
+    Subsets data from the MIDAS flat files. Allows extraction by:
 
+    The MIDASSubsetter class needs to be able to see the file 'midas_structure.txt' which
+    is essentially a description of the table contents in a text file. This is parsed each
+    time this script is called.
 
-Subsets data from the MIDAS flat files. Allows extraction by:
-
-The MIDASSubsetter class needs to be able to see the file 'midas_structure.txt' which
-is essentially a description of the table contents in a text file. This is parsed each
-time this script is called.
-
-There is hard-coded limit of 100,000 lines that can currently be extracted.
+    There is hard-coded limit of 100,000 lines that can currently be extracted.
 
 Where:
 ------
@@ -92,10 +91,10 @@ Where:
 Examples:
 =========
 
-    midas_extract subsetter -t RS -s 200401010000 -e 200401011000
-    midas_extract subsetter -t RS -s 200401010000 -e 200401011000 outputfile.dat
-    midas_extract subsetter -t RS -s 200401010000 -e 200401011000 -g testlist.txt outputfile.dat
-    midas_extract subsetter -t RS -s 200401010000 -e 200401011000 -i 214,926 -d tab
+    midas_extract extract -t RS -s 200401010000 -e 200401011000
+    midas_extract extract -t RS -s 200401010000 -e 200401011000 outputfile.dat
+    midas_extract extract -t RS -s 200401010000 -e 200401011000 -g testlist.txt outputfile.dat
+    midas_extract extract -t RS -s 200401010000 -e 200401011000 -i 214,926 -d tab
 
     """
     if not output_filepath:
@@ -125,9 +124,7 @@ Examples:
                           src_ids, region, delimiter, tmp_dir=tmp_dir)
 
 
-
-
-@main.command()
+@main.command('stations')
 @click.option('--output-filepath', '-o', default=None, help='Output file path (optional)')
 @click.option('--county', '-c', default=None, help='Comma-separated county list')
 @click.option('--bbox', '-b', default=None, help='Bounding box as: N,W,S,E')
@@ -175,7 +172,8 @@ def get_stations(output_filepath=None, county=None, bbox=None, quiet=False, coun
         raise click.ClickException("You must provide a miminum of either a list of counties or " \
                                    "bbox coordinates.")
 
-    return StationIDGetter(county, bbox, data_type, start, end, output_filepath, quiet)
+    return StationIDGetter(county, bbox, start_time=start, end_time=end, data_type=data_type,
+                           output_file=output_filepath, quiet=quiet)
 
 
 if __name__ == "__main__":
