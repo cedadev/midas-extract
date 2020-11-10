@@ -50,15 +50,15 @@ class StationIDGetter:
     Class to generate lists of station names from arguments.
     """
 
-    def __init__(self, counties, bbox, start_time, end_time, data_types=None, 
+    def __init__(self, counties, bbox, start_time, end_time, data_type=None, 
                  output_file=None, quiet=None):
         """
         Sets up instance variables and calls relevant methods.
         """
-        if not data_types:
-            self.data_types = []
+        if not data_type:
+            self.data_type = []
         else: 
-            self.data_types = [dtype.lower() for dtype in data_types]
+            self.data_type = [dtype.lower() for dtype in data_type]
 
         # fix times to ensure correct formats (integers)
         if type(start_time) == type("str"):
@@ -207,13 +207,15 @@ class StationIDGetter:
         """
         Does data type and time range filtering if requested.
         """
-        if self.data_types == [] and (self.start_time == None and self.end_time == None):
+        if self.data_type == [] and (self.start_time == None and self.end_time == None):
             return st_list
 
-        if self.data_types != []:
-            print("Filtering on data types: {}".format(self.data_types))
+        if self.data_type != []:
+            print("Filtering on data types: {}".format(self.data_type))
+
         if self.start_time:
             print("From: {}".format(self.start_time))
+
         if self.end_time:
             print("To: {}".format(self.end_time))
 
@@ -239,10 +241,10 @@ class StationIDGetter:
                 # Check if this data type includes this source id
                 data_type_allowed = False
 
-                if self.data_types != []:
+                if self.data_type != []:
                     dataType = items[idTypeCol]
 
-                    if dataType.lower() in self.data_types:
+                    if dataType.lower() in self.data_type:
                         data_type_allowed = True
 
                 else:

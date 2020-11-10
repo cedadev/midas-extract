@@ -30,9 +30,9 @@ _INPUTS = {
         ['--county', 'DEVON', '--end', '200501010000', '--data-type', 'rain'],
         ['--county', 'DEVON', '--end', '200501010000', '--data-type', 'rain', '--output-filepath', '/tmp/stations.txt'],
     ),
-    'filter': (
+    'extract': (
         ['--table', 'TD', '--start', '', '--end', '2017091011000'],
-        ['--table', 'TD', '--start', '201709010000', '--end', '201802011000', '--output_filepath', '/tmp/outputfile.dat'],
+        ['--table', 'TD', '--start', '201709010000', '--end', '201802011000', '--output-filepath', '/tmp/outputfile.dat'],
         ['--table', 'TD', '--start', '200401010000', '--end', '200401011000', '--src-ids', '214,926', '--delimiter', 'tab'],
     )
 }
@@ -100,54 +100,60 @@ def test_cli_get_stations_fail():
     assert 'Error: You must provide a miminum of either a list of counties or bbox coordinates.' in result.output
 
 
-def test_cli_get_stations_successes():
+@pytest.mark.parametrize('inputs', _INPUTS['stations'])
+def test_cli_get_stations_successes(inputs):
     """Test multiple successful get_stations call via the CLI."""
     runner = CliRunner()
-
     sub_cmd = 'stations' 
+
     # Test all successes
-    for inputs in _INPUTS[sub_cmd]:
-
-        result = runner.invoke(cli.main, [sub_cmd] + inputs)
-        assert result.exit_code == 0
+    result = runner.invoke(cli.main, [sub_cmd] + inputs)
+    assert result.exit_code == 0
 
 
-def test_get_stations_successes():
+@pytest.mark.parametrize('inputs', _INPUTS['stations'])
+def test_get_stations_successes(inputs):
     """Test multiple successful get_stations call in python."""
     # Test all successes
-    for inputs in _INPUTS['stations']:
-
-        kwargs = _map_inputs(inputs)
-        result = cli.get_stations(**kwargs)
+    kwargs = _map_inputs(inputs)
+    result = cli.get_stations(**kwargs)
 
 
-def test_cli_filter_records_fail():
-    """Test a failed filter call via the CLI."""
+def test_cli_extract_records_fail():
+    """Test a failed extract call via the CLI."""
     runner = CliRunner()
 
     # Test a failure
-    result = runner.invoke(cli.main, 'filter')
+    result = runner.invoke(cli.main, 'extract')
     assert result.exit_code == 1
     assert 'Error: Must provide table ID with "-t" argument.' in result.output
 
 
-def test_cli_filter_records_successes():
+def test_cli_extract_2():
+    runner = CliRunner()
+    sub_cmd = 'extract'
+
+    # Test all successes
+    result = runner.invoke(cli.main, [sub_cmd] + _INPUTS['extract'][0])
+    assert result.exit_code == 0
+
+
+@pytest.mark.parametrize('inputs', _INPUTS['extract'])
+def test_cli_extract_records_successes(inputs):
     """Test multiple successful get_stations call via the CLI."""
     runner = CliRunner()
+    sub_cmd = 'extract'
 
-    sub_cmd = 'stations'
     # Test all successes
-    for inputs in _INPUTS[sub_cmd]:
-
-        result = runner.invoke(cli.main, [sub_cmd] + inputs)
-        assert result.exit_code == 0
+    result = runner.invoke(cli.main, [sub_cmd] + inputs)
+    assert result.exit_code == 0
 
 
-def test_filter_records_successes():
+@pytest.mark.parametrize('inputs', _INPUTS['extract'])
+def test_extract_records_successes(inputs):
     """Test multiple successful get_stations call in python."""
     # Test all successes
-    for inputs in _INPUTS['stations']:
+    kwargs = _map_inputs(inputs)
+    result = cli.extract_records(**kwargs)
 
-        kwargs = _map_inputs(inputs)
-        result = cli.get_stations(**kwargs)
 
