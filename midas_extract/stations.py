@@ -180,7 +180,7 @@ class StationIDGetter:
 
         countyCodes = []
         countyMatches = []
-
+ 
         for area in geog["rows"]:
 
             area_list = [a.strip() for a in area.split(",")]
@@ -207,10 +207,10 @@ class StationIDGetter:
         """
         Does data type and time range filtering if requested.
         """
-        if self.data_type == [] and (self.start_time == None and self.end_time == None):
+        if not self.data_type and (self.start_time == None and self.end_time == None):
             return st_list
 
-        if self.data_type != []:
+        if self.data_type:
             print("Filtering on data types: {}".format(self.data_type))
 
         if self.start_time:
@@ -241,7 +241,7 @@ class StationIDGetter:
                 # Check if this data type includes this source id
                 data_type_allowed = False
 
-                if self.data_type != []:
+                if self.data_type:
                     dataType = items[idTypeCol]
 
                     if dataType.lower() in self.data_type:
