@@ -1,6 +1,8 @@
 """Testing and tutorial utilities module."""
 # Most of this code copied and adapted from xarray
 from pathlib import Path
+import subprocess as sp
+
 from urllib.request import urlretrieve
 
 
@@ -48,7 +50,7 @@ def get_file_path(
     fullname = sub_dir / name
 
     local_file = cache_dir / fullname
-    md5name = fullname.with_suffix(".md5")
+    md5name = Path(fullname.as_posix() + ".md5")
     md5file = cache_dir / md5name
 
     if not local_file.is_file():
@@ -58,15 +60,17 @@ def get_file_path(
         local_file.parent.mkdir(parents=True, exist_ok=True)
 
         url = "/".join((github_url, "raw", branch, fullname.as_posix()))
-        print(f'{url}')
+        print(f'Retrieving: {url}')
         urlretrieve(url, local_file)
+
         url = "/".join((github_url, "raw", branch, md5name.as_posix()))
+        print(f'Retrieving: {url}')
         urlretrieve(url, md5file)
 
-        localmd5 = file_md5_checksum(local_file)
+        localmd5 = sp.check_output(['md5sum', local_file]).decode('utf-8').strip().split()[0]
 
         with open(md5file) as f:
-            remotemd5 = f.read()
+            remotemd5 = f.read().strip().split()[0]
 
         if localmd5 != remotemd5:
             local_file.unlink()
