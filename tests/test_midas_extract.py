@@ -9,8 +9,10 @@ __copyright__ = "Copyright 2018 United Kingdom Research and Innovation"
 __license__ = "BSD - see LICENSE file in top-level package directory"
 __version__ = "0.1.0"
 
-
+import os
+import shutil
 import pytest
+from pathlib import Path
 from queue import deque
 
 from click.testing import CliRunner
@@ -100,8 +102,18 @@ def test_cli_get_stations_fail():
     assert 'Error: You must provide a miminum of either a list of counties or bbox coordinates.' in result.output
 
 
+def test_1(midas_metadata):
+    runner = CliRunner()
+    sub_cmd = 'stations'
+
+    # Test all successes
+    result = runner.invoke(cli.main, [sub_cmd] + _INPUTS['stations'][0])
+    assert result.exit_code == 0
+
+
+
 @pytest.mark.parametrize('inputs', _INPUTS['stations'])
-def test_cli_get_stations_successes(inputs):
+def test_cli_get_stations_successes(midas_metadata, inputs):
     """Test multiple successful get_stations call via the CLI."""
     runner = CliRunner()
     sub_cmd = 'stations' 
@@ -112,14 +124,14 @@ def test_cli_get_stations_successes(inputs):
 
 
 @pytest.mark.parametrize('inputs', _INPUTS['stations'])
-def test_get_stations_successes(inputs):
+def test_get_stations_successes(midas_metadata, inputs):
     """Test multiple successful get_stations call in python."""
     # Test all successes
     kwargs = _map_inputs(inputs)
     result = cli.get_stations(**kwargs)
 
 
-def test_cli_extract_records_fail():
+def test_cli_extract_records_fail(midas_metadata, midas_data):
     """Test a failed extract call via the CLI."""
     runner = CliRunner()
 
@@ -129,7 +141,7 @@ def test_cli_extract_records_fail():
     assert 'Error: Must provide table ID with "-t" argument.' in result.output
 
 
-def test_cli_extract_2():
+def test_cli_extract_2(midas_metadata, midas_data):
     runner = CliRunner()
     sub_cmd = 'extract'
 
@@ -139,7 +151,7 @@ def test_cli_extract_2():
 
 
 @pytest.mark.parametrize('inputs', _INPUTS['extract'])
-def test_cli_extract_records_successes(inputs):
+def test_cli_extract_records_successes(midas_metadata, midas_data, inputs):
     """Test multiple successful get_stations call via the CLI."""
     runner = CliRunner()
     sub_cmd = 'extract'
@@ -150,7 +162,7 @@ def test_cli_extract_records_successes(inputs):
 
 
 @pytest.mark.parametrize('inputs', _INPUTS['extract'])
-def test_extract_records_successes(inputs):
+def test_extract_records_successes(midas_metadata, midas_data, inputs):
     """Test multiple successful get_stations call in python."""
     # Test all successes
     kwargs = _map_inputs(inputs)
