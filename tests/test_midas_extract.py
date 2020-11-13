@@ -9,10 +9,13 @@ __copyright__ = "Copyright 2018 United Kingdom Research and Innovation"
 __license__ = "BSD - see LICENSE file in top-level package directory"
 __version__ = "0.1.0"
 
+import datetime
+import dateutil.parser as dp
 import os
 import shutil
 import pytest
 from pathlib import Path
+import pandas
 from queue import deque
 
 from click.testing import CliRunner
@@ -120,6 +123,11 @@ def test_cli_get_stations_successes(midas_metadata, inputs):
 
     # Test all successes
     result = runner.invoke(cli.main, [sub_cmd] + inputs)
+
+    # for pandas stuff later
+    # df = pandas.read_csv(<path>)
+    # assert <expected_stations>.issubset(set(df['src_ids']))
+
     assert result.exit_code == 0
 
 
@@ -155,9 +163,34 @@ def test_cli_extract_records_successes(midas_metadata, midas_data, inputs):
     """Test multiple successful get_stations call via the CLI."""
     runner = CliRunner()
     sub_cmd = 'extract'
+    output_dir = None
+    start = datetime.datetime.min
+    end = datetime.datetime.now()
+
+    try:
+        output_dir = inputs[inputs.index('--output-filepath') + 1]
+    except ValueError:
+        print(f'[INFO] No output path in {inputs}')
+
+    try:
+        start = dp.isoparse(inputs[inputs.index('--start') + 1])
+    except ValueError:
+        print(f'[INFO] No start date in {inputs}')
+
+    try:
+        end = dp.isoparse(inputs[inputs.index('--end') + 1])
+    except ValueError:
+        print(f'[INFO] No end date in {inputs}')
 
     # Test all successes
     result = runner.invoke(cli.main, [sub_cmd] + inputs)
+
+    if output_dir:
+        df = pandas.read_csv(output_dir, skipinitialspace=True)
+        stations = df['src_id'].tolist()
+        dates = [dp.isoparse(date) for date in df['ob_end_time'].tolist()]
+        assert all(date >= start and date <= end for date in dates)
+
     assert result.exit_code == 0
 
 
