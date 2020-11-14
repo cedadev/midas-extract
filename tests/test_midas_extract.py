@@ -164,10 +164,22 @@ def test_cli_extract_records_successes(midas_metadata, midas_data, inputs):
     """Test multiple successful get_stations call via the CLI."""
     runner = CliRunner()
     sub_cmd = 'extract'
+
+    # Test all successes
+    result = runner.invoke(cli.main, [sub_cmd] + inputs)
+    assert result.exit_code == 0
+
+
+@pytest.mark.parametrize('inputs', _INPUTS['extract'])
+def test_extract_data_date_range(midas_metadata, midas_data, inputs):
+    runner = CliRunner()
+    sub_cmd = 'extract'
     output_dir = None
-    src_ids = None
     start = datetime.datetime.min
     end = datetime.datetime.now()
+
+    result = runner.invoke(cli.main, [sub_cmd] + inputs)
+    assert result.exit_code == 0
 
     try:
         output_dir = inputs[inputs.index('--output-filepath') + 1]
@@ -184,24 +196,39 @@ def test_cli_extract_records_successes(midas_metadata, midas_data, inputs):
     except ValueError:
         print(f'[INFO] No end date in {inputs}')
 
-    try:
-        src_ids = set(map(int, inputs[inputs.index('--src-ids') + 1].split(',')))
-    except ValueError:
-        print(f'[INFO] No end src-ids in {inputs}')
-
-    # Test all successes
-    result = runner.invoke(cli.main, [sub_cmd] + inputs)
-    assert result.exit_code == 0
-
     if output_dir:
         df = pandas.read_csv(output_dir, skipinitialspace=True)
 
         dates = list(map(dp.isoparse, df['ob_end_time'].tolist()))
         assert all(date >= start and date <= end for date in dates)
 
-        if src_ids:
-            stations = set(df['src_id'].tolist())
-            assert src_ids == stations
+
+@pytest.mark.parametrize('inputs', _INPUTS['extract'])
+def test_extract_data_src_ids(midas_metadata, midas_data, inputs):
+    runner = CliRunner()
+    sub_cmd = 'extract'
+    output_dir = None
+    src_ids = None
+
+    result = runner.invoke(cli.main, [sub_cmd] + inputs)
+    assert result.exit_code == 0
+
+    try:
+        output_dir = inputs[inputs.index('--output-filepath') + 1]
+    except ValueError:
+        print(f'[INFO] No output path in {inputs}')
+
+    try:
+        src_ids = set(map(int, inputs[inputs.index('--src-ids') + 1].split(',')))
+    except ValueError:
+        print(f'[INFO] No end src-ids in {inputs}')
+
+    if output_dir and src_ids:
+        df = pandas.read_csv(output_dir, skipinitialspace=True)
+
+        stations = set(df['src_id'].tolist())
+        assert src_ids == stations
+
 
 
 @pytest.mark.parametrize('inputs', _INPUTS['extract'])
