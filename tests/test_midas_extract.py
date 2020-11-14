@@ -39,6 +39,7 @@ _INPUTS = {
         ['--table', 'TD', '--start', '', '--end', '2017091011000'],
         ['--table', 'TD', '--start', '201709010000', '--end', '201802011000', '--output-filepath', '/tmp/test_outputfile_1.dat'],
         ['--table', 'TD', '--start', '201901010000', '--end', '201910011000', '--src-ids', '62149,926', '--output-filepath', '/tmp/test_outputfile_2.dat'],
+        ['--table', 'TD', '--start', '201701010000', '--end', '201701030000', '--src-ids', '38,159,373,1055', '--output-filepath', '/tmp/test_outputfile_3.dat'],
         ['--table', 'TD', '--start', '200401010000', '--end', '200401011000', '--src-ids', '214,926', '--delimiter', 'tab'],
     )
 }
