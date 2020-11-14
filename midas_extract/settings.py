@@ -12,20 +12,27 @@ import os
 import datetime
 
 
-DATA_DIR = os.environ.get('MIDAS_DATA_DIR', '/badc/ukmo-midas/data')
-METADATA_DIR = os.environ.get('MIDAS_METADATA_DIR', '/badc/ukmo-midas/metadata')
-
-if not os.path.isdir(DATA_DIR):
-    raise Exception('Data directory does not exist: {}'.format(DATA_DIR))
-
-if not os.path.isdir(METADATA_DIR):
-    raise Exception('Metadata directory does not exist: {}'.format(METADATA_DIR))
-
-
 def _now():
     return datetime.datetime.now().strftime('%Y%m%d%H%M')
 
 START_DEFAULT = '185901010000'
 END_DEFAULT = _now()
 
+
+def get_data_dir():
+    data_dir = os.environ.get('MIDAS_DATA_DIR', '/badc/ukmo-midas/data')
+
+    if not os.path.isdir(data_dir):
+        raise Exception(f'Data directory does not exist: {data_dir}')
+
+    return data_dir
+
+
+def get_metadata_dir():
+    metadata_dir = os.environ.get('MIDAS_METADATA_DIR', '/badc/ukmo-midas/metadata')
+
+    if not os.path.isdir(metadata_dir):
+        raise Exception(f'Metadata directory does not exist: {metadata_dir}')
+
+    return metadata_dir
 

@@ -74,13 +74,13 @@ from midas_extract import settings
 
 
 # Set up global variables
-metadata_dir = settings.METADATA_DIR
-data_dir = settings.DATA_DIR
+#metadata_dir = settings.get_metadata_dir()
+#data_dir = settings.get_data_dir()
 
 # Set up global variables
 base_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
-midasStructureTable = os.path.join(metadata_dir, "allTablePartitionNames.txt")
+#midasStructureTable = os.path.join(metadata_dir, "allTablePartitionNames.txt")
 
 # partition regex pattern
 _partitionPattern = re.compile(r"\w+_[a-zA-Z\-]+_(\d{6})-(\d{6})\.txt")
@@ -128,7 +128,7 @@ def tableMatch(tableName):
         elif tableName + "XX" in shortnames:
             longname = nameDict[tableName + "XX"]
         else:
-            raise Exception("Tablename not known: %s" % tableName)
+            raise Exception(f"Tablename not known: {tableName}")
 
         shortname = tableName[:2]
 
@@ -136,7 +136,7 @@ def tableMatch(tableName):
         longnames = nameDict.values()
 
         if tableName not in longnames:
-            raise Exception("Tablename not known: %s" % tableName)
+            raise Exception(f"Tablename not known: {tableName}")
         else:
             for s, l in nameDict.items():
                 if l == tableName:
@@ -162,7 +162,9 @@ def getColumnIndex(tableID, colName):
     """
     Returns the index in a row of a given column name.
     """
-    inputFile = os.path.join(metadata_dir, "table_structures/%sTB.txt" % tableID)
+    metadata_dir = settings.get_metadata_dir()
+
+    inputFile = os.path.join(metadata_dir, f"table_structures/{tableID}TB.txt")
     colNames = [col.strip().lower() for col in open(inputFile).readlines()]
 
     if colName in colNames:
@@ -246,11 +248,13 @@ class MIDASSubsetter:
 
         self._writeOutputFile(dataFile, outputPath, delimiter)
 
-    def _parseTableStructure(self, structureFile=midasStructureTable):
+    def _parseTableStructure(self):
+###, structureFile=midasStructureTable):
         """
         Parses the table structure text file to return a list of [<files>, <columns>]
         where <files> is a list of [<file_name>, <start_time>, <end_time>].
         """
+        data_dir = settings.get_data_dir()
         tableDict = {}
 
         fpatt = re.compile(r"\w+_([a-zA-Z\-]+)_(\d{6})-(\d{6}).txt")
@@ -415,8 +419,9 @@ class MIDASSubsetter:
         """
         Reads in the dictionary to get the headers for each column.
         """
-        inputFile = os.path.join(
-            metadata_dir, "table_structures/%sTB.txt" % tableID)
+        metadata_dir = settings.get_metadata_dir()
+
+        inputFile = os.path.join(metadata_dir, "table_structures/%sTB.txt" % tableID)
 
         rowHeaders = [rh.strip().lower() for rh in open(inputFile).readlines()]
         return rowHeaders

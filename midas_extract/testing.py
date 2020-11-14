@@ -1,12 +1,21 @@
 """Testing and tutorial utilities module."""
 # Most of this code copied and adapted from xarray
 from pathlib import Path
+import hashlib
 import subprocess as sp
 
 from urllib.request import urlretrieve
 
 
 _default_cache_dir = Path.home() / ".mini_ceda_archive"
+
+
+def file_md5_checksum(fname):
+    hash_md5 = hashlib.md5()
+    with open(fname, "rb") as f:
+        hash_md5.update(f.read())
+
+    return hash_md5.hexdigest()
 
 
 # idea copied from xarray that borrowed it from Seaborn
@@ -67,7 +76,7 @@ def get_file_path(
         print(f'Retrieving: {url}')
         urlretrieve(url, md5file)
 
-        localmd5 = sp.check_output(['md5sum', local_file]).decode('utf-8').strip().split()[0]
+        localmd5 = file_md5_checksum(local_file)
 
         with open(md5file) as f:
             remotemd5 = f.read().strip().split()[0]

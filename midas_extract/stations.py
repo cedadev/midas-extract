@@ -18,14 +18,15 @@ from midas_extract import settings
 
 
 # Set up global variables
-metadata_dir = settings.METADATA_DIR
-source_file = os.path.join(metadata_dir, "SRCE", "SRCE.DATA.COMMAS_REMOVED")
-source_cols_file = os.path.join(metadata_dir, "table_structures", "SRTB.txt")
-source_capabilities_file = os.path.join(metadata_dir, "SRCC", "SRCC.DATA")
-source_caps_cols_file = os.path.join(metadata_dir, "table_structures", "SCTB.txt")
+#metadata_dir = settings.get_metadata_dir()
 
-geog_area_file = os.path.join(metadata_dir, "GEAR", "GEAR.DATA")
-geog_area_cols_file = os.path.join(metadata_dir, "table_structures", "GEOGRAPHIC_AREA.txt")
+#source_file = os.path.join(metadata_dir, "SRCE", "SRCE.DATA.COMMAS_REMOVED")
+#source_cols_file = os.path.join(metadata_dir, "table_structures", "SRTB.txt")
+#source_capabilities_file = os.path.join(metadata_dir, "SRCC", "SRCC.DATA")
+
+#source_caps_cols_file = os.path.join(metadata_dir, "table_structures", "SCTB.txt")
+#geog_area_file = os.path.join(metadata_dir, "GEAR", "GEAR.DATA")
+#geog_area_cols_file = os.path.join(metadata_dir, "table_structures", "GEOGRAPHIC_AREA.txt")
 
 _date_pattern = re.compile(r"(\d{4})-(\d{2})-(\d{2})\s*(\d{2})?:?(\d{2})?")
 
@@ -55,6 +56,9 @@ class StationIDGetter:
         """
         Sets up instance variables and calls relevant methods.
         """
+        # Set up directories
+        self._setup_dirs()
+
         if not data_type:
             self.data_type = []
         else: 
@@ -100,6 +104,18 @@ class StationIDGetter:
                     output.write(row + "\r\n")
 
             print("Output written to '{}'".format(output_file))
+
+    def _setup_dirs(self):
+        metadata_dir = settings.get_metadata_dir()
+
+        self.source_file = os.path.join(metadata_dir, "SRCE", "SRCE.DATA.COMMAS_REMOVED")
+        self.source_cols_file = os.path.join(metadata_dir, "table_structures", "SRTB.txt")
+        self.source_capabilities_file = os.path.join(metadata_dir, "SRCC", "SRCC.DATA")
+
+        self.source_caps_cols_file = os.path.join(metadata_dir, "table_structures", "SCTB.txt")
+        self.geog_area_file = os.path.join(metadata_dir, "GEAR", "GEAR.DATA")
+        self.geog_area_cols_file = os.path.join(metadata_dir, "table_structures", "GEOGRAPHIC_AREA.txt")
+
 
     def get_station_list(self):
         """
@@ -298,12 +314,12 @@ class StationIDGetter:
         """
         self.tables = {}
 
-        self.tables["SOURCE"] = {"columns": [i.strip() for i in open(source_cols_file).readlines()],
-                                 "rows": [i.strip() for i in self._clean_rows(open(source_file).readlines())]}
-        self.tables["GEOG"] = {"columns": [i.strip() for i in open(geog_area_cols_file).readlines()],
-                               "rows": [i.strip() for i in self._clean_rows(open(geog_area_file).readlines())]}
-        self.tables["SRCC"] = {"columns": [i.strip() for i in open(source_caps_cols_file).readlines()],
-                               "rows": [i.strip() for i in self._clean_rows(open(source_capabilities_file).readlines())]}
+        self.tables["SOURCE"] = {"columns": [i.strip() for i in open(self.source_cols_file).readlines()],
+                                 "rows": [i.strip() for i in self._clean_rows(open(self.source_file).readlines())]}
+        self.tables["GEOG"] = {"columns": [i.strip() for i in open(self.geog_area_cols_file).readlines()],
+                               "rows": [i.strip() for i in self._clean_rows(open(self.geog_area_file).readlines())]}
+        self.tables["SRCC"] = {"columns": [i.strip() for i in open(self.source_caps_cols_file).readlines()],
+                               "rows": [i.strip() for i in self._clean_rows(open(self.source_capabilities_file).readlines())]}
 
     def _clean_rows(self, rows):
         """
