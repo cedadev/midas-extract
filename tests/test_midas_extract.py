@@ -37,7 +37,8 @@ _INPUTS = {
     ),
     'extract': (
         ['--table', 'TD', '--start', '', '--end', '2017091011000'],
-        ['--table', 'TD', '--start', '201709010000', '--end', '201802011000', '--output-filepath', '/tmp/outputfile.dat'],
+        ['--table', 'TD', '--start', '201709010000', '--end', '201802011000', '--output-filepath', '/tmp/test_outputfile_1.dat'],
+        ['--table', 'TD', '--start', '201901010000', '--end', '201910011000', '--src-ids', '62149,926', '--output-filepath', '/tmp/test_outputfile_2.dat'],
         ['--table', 'TD', '--start', '200401010000', '--end', '200401011000', '--src-ids', '214,926', '--delimiter', 'tab'],
     )
 }
@@ -164,6 +165,7 @@ def test_cli_extract_records_successes(midas_metadata, midas_data, inputs):
     runner = CliRunner()
     sub_cmd = 'extract'
     output_dir = None
+    src_ids = None
     start = datetime.datetime.min
     end = datetime.datetime.now()
 
@@ -182,16 +184,24 @@ def test_cli_extract_records_successes(midas_metadata, midas_data, inputs):
     except ValueError:
         print(f'[INFO] No end date in {inputs}')
 
+    try:
+        src_ids = set(map(int, inputs[inputs.index('--src-ids') + 1].split(',')))
+    except ValueError:
+        print(f'[INFO] No end src-ids in {inputs}')
+
     # Test all successes
     result = runner.invoke(cli.main, [sub_cmd] + inputs)
+    assert result.exit_code == 0
 
     if output_dir:
         df = pandas.read_csv(output_dir, skipinitialspace=True)
-        stations = df['src_id'].tolist()
-        dates = [dp.isoparse(date) for date in df['ob_end_time'].tolist()]
+
+        dates = list(map(dp.isoparse, df['ob_end_time'].tolist()))
         assert all(date >= start and date <= end for date in dates)
 
-    assert result.exit_code == 0
+        if src_ids:
+            stations = set(df['src_id'].tolist())
+            assert src_ids == stations
 
 
 @pytest.mark.parametrize('inputs', _INPUTS['extract'])
