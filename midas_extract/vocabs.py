@@ -36,9 +36,29 @@ TIPPERARY,TURKS & CAICOS ISLANDS,TYNE & WEAR,TYRONE,WARWICKSHIRE,WATERFORD,WESTE
 WEST GLAMORGAN,WEST LOTHIAN,WEST LOTHIAN (IN CENTRAL REGION),
 WEST LOTHIAN (IN LOTHIAN REGION),WESTMEATH,WEST MIDLANDS,WESTMORLAND,WEST SUFFOLK,
 WEST SUSSEX,WEST YORKSHIRE,WEXFORD,WICKLOW,WIGTOWNSHIRE,WILTSHIRE,WORCESTERSHIRE,
-YORKSHIRE""".lower().replace('\n', '').split(',')
+YORKSHIRE""".replace('\n', '').split(',')
 
 DATA_TYPES = ['CLBD', 'CLBN', 'CLBR', 'CLBW', 'DCNN', 'FIXD', 'ICAO', 'LPMS', 'RAIN', 
 'SHIP', 'WIND', 'WMO']
 
 TABLE_NAMES = ['TD', 'WD', 'RD', 'RH', 'RS', 'ST', 'WH', 'WM', 'RO']
+
+MIDAS_CATALOGUE_DICT = {
+    "WM":   "http://catalogue.ceda.ac.uk/uuid/a1f65a362c26c9fa667d98c431a1ad38",
+    "RH":   "http://catalogue.ceda.ac.uk/uuid/bbd6916225e7475514e17fdbf11141c1",
+    "CURS": "http://catalogue.ceda.ac.uk/uuid/7f76ab4a47ee107778e0a7e8a701ee77",
+    "ST":   "http://catalogue.ceda.ac.uk/uuid/8dc05f6ecc6065a5d10fc7b8829589ec",
+    "GL":   "http://catalogue.ceda.ac.uk/uuid/0ec59f09b3158829a059fe70b17de951",
+    "CUNS": "http://catalogue.ceda.ac.uk/uuid/bef3d059255a0feaa14eb78c77d7bc48",
+    "TMSL": "http://catalogue.ceda.ac.uk/uuid/33ca1887e5f116057340e404b2c752f2",
+    "RO":   "http://catalogue.ceda.ac.uk/uuid/b4c028814a666a651f52f2b37a97c7c7",
+    "MO":   "http://catalogue.ceda.ac.uk/uuid/77910bcec71c820d4c92f40d3ed3f249",
+    "RS":   "http://catalogue.ceda.ac.uk/uuid/455f0dd48613dada7bfb0ccfcb7a7d41",
+    "RD":   "http://catalogue.ceda.ac.uk/uuid/c732716511d3442f05cdeccbe99b8f90",
+    "CUNL": "http://catalogue.ceda.ac.uk/uuid/ec1d8e1e511838b9303921986a0137de",
+    "TD":   "http://catalogue.ceda.ac.uk/uuid/1bb479d3b1e38c339adb9c82c15579d8",
+    "SCLE": "http://catalogue.ceda.ac.uk/uuid/1d9aa0abc4e93fca1f91c8a187d46567",
+    "WD":   "http://catalogue.ceda.ac.uk/uuid/954d743d1c07d1dd034c131935db54e0",
+    "WH":   "http://catalogue.ceda.ac.uk/uuid/916ac4bbc46f7685ae9a5e10451bae7c",
+    "CURL": "http://catalogue.ceda.ac.uk/uuid/fe9a02b85b50d3ee1d0b7366355bb9d8"
+}
