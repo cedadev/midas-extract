@@ -147,14 +147,28 @@ def tableMatch(tableName):
     return (shortname[:2], longname)
 
 
-def pad_time(timestring):
+def pad_time(timestring, pos='start'):
     """
     Returns a 12 digit string as time by padding any missing month, day, hour
     or minute values.
+
+    If `pos` is `start`: Pad with year=0, month=1, day=1, hour=0, min=0
+    If `pos` is `end`:   Pad with year=9999, month=12, day=31, 
+                         hour=23, min=59
+
+    Default is to pad with start position.
     """
-    padder = "000001010000"
+    yr = int(timestring[:4])
+
+    if pos == 'end':
+        padder = "999912312359"
+    else:
+        # Default to start
+        padder = "000001010000"
+
     if len(timestring) < 12:
         timestring = timestring + (padder[len(timestring):])
+
     return timestring
 
 
