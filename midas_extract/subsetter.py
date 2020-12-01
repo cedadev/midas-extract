@@ -355,8 +355,8 @@ class MIDASSubsetter:
         tempFilePath = os.path.join(self.tmp_dir, "temp_%s" % (now))
         tempFile = open(tempFilePath, "w")
 
-        startTimeLong = int(pad_time(startTime))
-        endTimeLong = int(pad_time(endTime))
+        startTimeLong = int(pad_time(startTime, 'start'))
+        endTimeLong = int(pad_time(endTime, 'end'))
 
         getAllSrcIds = False
         # Set up srcId pattern finders
@@ -450,8 +450,8 @@ class MIDASSubsetter:
         tempFilePath = os.path.join(self.tmp_dir, "temp_%s" % (now))
         tempFile = open(tempFilePath, "w")
 
-        startTimeLong = int(pad_time(startTime))
-        endTimeLong = int(pad_time(endTime))
+        startTimeLong = int(pad_time(startTime, 'start'))
+        endTimeLong = int(pad_time(endTime, 'end'))
 
         count = 0
 
