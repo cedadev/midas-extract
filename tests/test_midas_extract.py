@@ -85,7 +85,7 @@ def test_cli_get_stations_fail():
     assert 'Error: You must provide a miminum of either a list of counties or bbox coordinates.' in result.output
 
 
-def test_1(midas_metadata):
+def test_1(load_test_data):
     runner = CliRunner()
     sub_cmd = 'stations'
 
@@ -96,7 +96,7 @@ def test_1(midas_metadata):
 
 
 @pytest.mark.parametrize('inputs', _INPUTS['stations'])
-def test_cli_get_stations_successes(midas_metadata, inputs):
+def test_cli_get_stations_successes(load_test_data, inputs):
     """Test multiple successful get_stations call via the CLI."""
     runner = CliRunner()
     sub_cmd = 'stations' 
@@ -107,14 +107,14 @@ def test_cli_get_stations_successes(midas_metadata, inputs):
 
 
 @pytest.mark.parametrize('inputs', _INPUTS['stations'])
-def test_get_stations_successes(midas_metadata, inputs):
+def test_get_stations_successes(load_test_data, inputs):
     """Test multiple successful get_stations call in python."""
     # Test all successes
     kwargs = _map_inputs(inputs)
     result = cli.get_stations(**kwargs)
 
 
-def test_cli_extract_records_fail(midas_metadata, midas_data):
+def test_cli_extract_records_fail(load_test_data):
     """Test a failed extract call via the CLI."""
     runner = CliRunner()
 
@@ -124,7 +124,7 @@ def test_cli_extract_records_fail(midas_metadata, midas_data):
     assert 'Error: Must provide table ID with "-t" argument.' in result.output
 
 
-def test_cli_extract_2(midas_metadata, midas_data):
+def test_cli_extract_2(load_test_data):
     runner = CliRunner()
     sub_cmd = 'extract'
 
@@ -134,7 +134,7 @@ def test_cli_extract_2(midas_metadata, midas_data):
 
 
 @pytest.mark.parametrize('inputs', _INPUTS['extract'])
-def test_cli_extract_records_successes(midas_metadata, midas_data, inputs):
+def test_cli_extract_records_successes(load_test_data, inputs):
     """Test multiple successful get_stations call via the CLI."""
     runner = CliRunner()
     sub_cmd = 'extract'
@@ -145,7 +145,7 @@ def test_cli_extract_records_successes(midas_metadata, midas_data, inputs):
 
 
 @pytest.mark.parametrize('inputs', _INPUTS['extract'])
-def test_extract_records_successes(midas_metadata, midas_data, inputs):
+def test_extract_records_successes(load_test_data, inputs):
     """Test multiple successful get_stations call in python."""
     # Test all successes
     kwargs = _map_inputs(inputs)
